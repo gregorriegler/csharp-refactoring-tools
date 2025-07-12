@@ -1,5 +1,7 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
+## TDD Phase: 🔴
+
 ### 1. Expression-Only Extraction
 **Problem**: Current implementation focuses on `StatementSyntax` but fails when extracting pure expressions.
 **Example**: 
