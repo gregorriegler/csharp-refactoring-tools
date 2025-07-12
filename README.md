@@ -1,6 +1,8 @@
 # C# Refactoring Tools
 
-A collection of Roslyn-based tools for analyzing and refactoring C# code, designed to be used in a simple, non-interactive way. For example on the CLI. It's written by agents for agents.
+[![Tests](https://github.com/gregorriegler/csharp-refactoring-tools/actions/workflows/tests.yml/badge.svg)](https://github.com/gregorriegler/csharp-refactoring-tools/actions/workflows/tests.yml)
+
+A collection of Roslyn-based tools for analyzing and refactoring C# code, designed to be used in a simple, non-interactive way, for example on the CLI. By agents for agents.
 
 ## Build the Project
 
