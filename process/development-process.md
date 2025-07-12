@@ -9,7 +9,7 @@ STARTER_SYMBOL=🔄
    - `## TDD Phase: 🔴` - need to write a failing test
    - `## TDD Phase: 🟢` - need to make a test pass
    - `## TDD Phase: 🧹` - need to refactor
-4. If no TDD phase indicator is found in `goal.md`, default to RED phase and add `## TDD Phase: 🔴` to `goal.md`
+4. If no TDD phase indicator is found in `goal.md`, default to RED phase and add `## TDD Phase: 🔴` to `goal.md` and git commit it using the commit message format "d <message>".
 5. Route to appropriate process:
    - 🔴: Create new context with "Read and follow `process/write-a-failing-test.md`"
    - 🟢: Create new context with "Read and follow `process/make-it-pass.md`"
