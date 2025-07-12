@@ -26,9 +26,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         if (root == null)
             throw new InvalidOperationException("SyntaxRoot is null.");
 
-        var spanText = root.GetText().ToString(span);
-        Console.WriteLine("\n=== Raw Span Content ===\n" + spanText);
-
         var selectedNode = root.FindNode(span);
 
         var selectedStatements = new List<StatementSyntax>();
@@ -60,11 +57,9 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         // If no statements found, check if we're selecting an expression
         if (selectedStatements.Count == 0)
         {
-            Console.WriteLine("DEBUG: No statements found, looking for expressions");
             if (selectedNode is ExpressionSyntax expression)
             {
                 selectedExpression = expression;
-                Console.WriteLine($"DEBUG: Selected node is expression: {selectedExpression}");
             }
             else
             {
@@ -73,19 +68,11 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                     .OfType<ExpressionSyntax>()
                     .ToList();
 
-                Console.WriteLine($"DEBUG: Found {allExpressions.Count} expressions in descendants");
-                foreach (var expr in allExpressions)
-                {
-                    Console.WriteLine($"DEBUG: Expression: {expr} (span: {expr.Span}, overlaps: {span.OverlapsWith(expr.Span)})");
-                }
-
                 // Try to find an expression that overlaps with or contains the span
                 selectedExpression = allExpressions
                     .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
                     .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
                     .FirstOrDefault();
-
-                Console.WriteLine($"DEBUG: Selected expression from descendants: {selectedExpression}");
 
                 // If still not found, try looking at ancestors for expressions that contain the span
                 if (selectedExpression == null)
@@ -104,7 +91,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 }
             }
 
-            Console.WriteLine($"DEBUG: Final selected expression: {selectedExpression}");
             if (selectedExpression == null)
                 throw new InvalidOperationException("No statements or expressions selected for extraction.");
         }
