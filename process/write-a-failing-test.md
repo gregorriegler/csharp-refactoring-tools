@@ -4,9 +4,7 @@ STARTER_SYMBOL = 🔴
 
 Your answers should be succinct and concise.
 
-1. Understand where you are
-    - Read the `README.md` and `goal.md`.
-    - Run `pwd`.
+1. Understand where you are and read the `README.md` and `goal.md`.
 2. Ensure there are no uncommitted changes
     - **STOP** immediately if uncommitted changes are detected. use `./say.py` to notify me
 3. Confirm all current tests pass by executing `./test.sh`
