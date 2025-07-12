@@ -42,7 +42,12 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         }
         else if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
         {
-            selectedStatements.Add(singleStatement);
+            // Only treat as statement extraction if the span covers the entire statement
+            // If it's a partial selection, look for expressions instead
+            if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
+            {
+                selectedStatements.Add(singleStatement);
+            }
         }
         else
         {
@@ -55,9 +60,11 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         // If no statements found, check if we're selecting an expression
         if (selectedStatements.Count == 0)
         {
+            Console.WriteLine("DEBUG: No statements found, looking for expressions");
             if (selectedNode is ExpressionSyntax expression)
             {
                 selectedExpression = expression;
+                Console.WriteLine($"DEBUG: Selected node is expression: {selectedExpression}");
             }
             else
             {
@@ -66,12 +73,19 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                     .OfType<ExpressionSyntax>()
                     .ToList();
 
+                Console.WriteLine($"DEBUG: Found {allExpressions.Count} expressions in descendants");
+                foreach (var expr in allExpressions)
+                {
+                    Console.WriteLine($"DEBUG: Expression: {expr} (span: {expr.Span}, overlaps: {span.OverlapsWith(expr.Span)})");
+                }
 
                 // Try to find an expression that overlaps with or contains the span
                 selectedExpression = allExpressions
                     .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
                     .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
                     .FirstOrDefault();
+
+                Console.WriteLine($"DEBUG: Selected expression from descendants: {selectedExpression}");
 
                 // If still not found, try looking at ancestors for expressions that contain the span
                 if (selectedExpression == null)
@@ -90,9 +104,13 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 }
             }
 
-
+            Console.WriteLine($"DEBUG: Final selected expression: {selectedExpression}");
             if (selectedExpression == null)
                 throw new InvalidOperationException("No statements or expressions selected for extraction.");
+        }
+        else
+        {
+            Console.WriteLine($"DEBUG: Found {selectedStatements.Count} statements, using statement extraction");
         }
 
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
@@ -150,9 +168,26 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 returnType = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
             }
 
-            // Create method body that returns the expression
-            var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
-            newMethodBody = SyntaxFactory.Block(returnStatement);
+            // For simple identifiers, return directly. For complex expressions, create a local variable first.
+            if (selectedExpression is IdentifierNameSyntax)
+            {
+                // Simple variable reference - return directly
+                var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
+                newMethodBody = SyntaxFactory.Block(returnStatement);
+            }
+            else
+            {
+                // Complex expression - create local variable and return it
+                var variableDeclaration = SyntaxFactory.LocalDeclarationStatement(
+                    SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
+                        .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier("a"))
+                                .WithInitializer(SyntaxFactory.EqualsValueClause(selectedExpression)))));
+
+                var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("a"));
+                newMethodBody = SyntaxFactory.Block(variableDeclaration, returnStatement);
+                Console.WriteLine($"DEBUG: Created method body with {newMethodBody.Statements.Count} statements");
+            }
         }
         else
         {
@@ -213,7 +248,52 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             }
             else if (returns.Count == 0)
             {
-                callStatement = SyntaxFactory.ExpressionStatement(invocationExpressionSyntax);
+                // Check if we have a single variable declaration statement
+                if (selectedStatements.Count == 1 && selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
+                {
+                    var variable = localDecl.Declaration.Variables.FirstOrDefault();
+                    if (variable != null)
+                    {
+                        // This is a variable declaration - we should return the variable and replace with assignment
+                        var variableName = variable.Identifier.Text;
+                        var variableType = localDecl.Declaration.Type;
+
+                        // Add return statement to the extracted method
+                        var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variableName));
+                        newMethodBody = newMethodBody.AddStatements(returnStatement);
+
+                        // Replace with assignment to the method call
+                        callStatement = SyntaxFactory.LocalDeclarationStatement(
+                            SyntaxFactory.VariableDeclaration(variableType)
+                                .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                                        .WithInitializer(SyntaxFactory.EqualsValueClause(invocationExpressionSyntax)))));
+
+                        // Update return type to match the variable type
+                        if (model != null && variable.Initializer?.Value != null)
+                        {
+                            var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                            if (typeInfo.Type != null)
+                            {
+                                returnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                            }
+                        }
+
+                        // Always update the method declaration with the new return type and body
+                        methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, newMethodName)
+                            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
+                            .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
+                            .WithBody(newMethodBody);
+                    }
+                    else
+                    {
+                        callStatement = SyntaxFactory.ExpressionStatement(invocationExpressionSyntax);
+                    }
+                }
+                else
+                {
+                    callStatement = SyntaxFactory.ExpressionStatement(invocationExpressionSyntax);
+                }
             }
             else if (returns.FirstOrDefault() is { } localReturnSymbol)
             {
@@ -233,6 +313,12 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 }
 
                 newMethodBody = newMethodBody.AddStatements(returnStatement);
+
+                // Update the method declaration with the new body that includes the return statement
+                methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, newMethodName)
+                    .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
+                    .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
+                    .WithBody(newMethodBody);
             }
             else
             {
