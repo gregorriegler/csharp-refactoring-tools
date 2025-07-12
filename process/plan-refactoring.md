@@ -14,4 +14,5 @@ STARTER_SYMBOL=🧹
       - Note: When you extract something, it should not have more than one return value. Too many return values as well as too many arguments are an indicator for strong coupling. Prefer high cohesion and low coupling, where high cohesion comes first.
     - Primitive Obsession
 4. Think, whether the thing you want to improve can be decomposed into small steps that leave the tests passing.
+    - End up with no more than 3 refactoring steps
 5. List all the steps as tasks prefixed with a checkbox in `refactoring-plan.md`.
