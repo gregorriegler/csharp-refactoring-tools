@@ -64,3 +64,157 @@ var result = someComplexCalculation + anotherComplexCalculation;
 - Complex closure scenarios
 - Field vs local variable distinction
 **Goal**: Enhance data flow analysis for complex variable usage patterns.
+
+## Scenarios
+
+### Simple Expression Extraction - DRAFT
+Extract a single arithmetic expression from an assignment statement.
+```csharp
+var result = a + b * c;
+// Extract: a + b * c
+```
+
+### Simple Statement Block Extraction - DRAFT
+Extract a sequence of simple statements that don't return values.
+```csharp
+var x = 10;
+var y = 20;
+Console.WriteLine(x + y);
+// Extract: all three statements into a void method
+```
+
+### Single Return Value Extraction - DRAFT
+Extract code that calculates and returns a single value.
+```csharp
+var total = 0;
+for (int i = 0; i < items.Length; i++)
+{
+    total += items[i];
+}
+return total;
+// Extract: calculation logic into a method returning int
+```
+
+### Local Variable Usage Extraction - DRAFT
+Extract code that uses local variables as parameters.
+```csharp
+var name = "John";
+var age = 25;
+var message = $"Hello {name}, you are {age} years old";
+Console.WriteLine(message);
+// Extract: message creation and printing, passing name and age as parameters
+```
+
+### Method Call Chain Extraction - DRAFT
+Extract a chain of method calls into a separate method.
+```csharp
+var result = data
+    .Where(x => x.IsActive)
+    .Select(x => x.Name)
+    .OrderBy(x => x)
+    .ToList();
+// Extract: the entire LINQ chain
+```
+
+### Conditional Logic Extraction - DRAFT
+Extract simple if-else logic into a method.
+```csharp
+if (user.Age >= 18)
+{
+    user.CanVote = true;
+    user.Status = "Adult";
+}
+else
+{
+    user.CanVote = false;
+    user.Status = "Minor";
+}
+// Extract: age-based status setting logic
+```
+
+### Loop Body Extraction - DRAFT
+Extract the body of a simple loop into a method.
+```csharp
+foreach (var item in items)
+{
+    item.Process();
+    item.Validate();
+    results.Add(item.GetResult());
+}
+// Extract: item processing logic
+```
+
+### Exception Handling Extraction - DRAFT
+Extract code that includes try-catch blocks.
+```csharp
+try
+{
+    var data = LoadData(filename);
+    var processed = ProcessData(data);
+    SaveData(processed, outputFile);
+}
+catch (FileNotFoundException ex)
+{
+    LogError($"File not found: {ex.Message}");
+    return false;
+}
+// Extract: file processing with error handling
+```
+
+### Async Method Extraction - DRAFT
+Extract code containing await expressions.
+```csharp
+var client = new HttpClient();
+var response = await client.GetAsync(url);
+var content = await response.Content.ReadAsStringAsync();
+return JsonSerializer.Deserialize<T>(content);
+// Extract: HTTP request and deserialization logic
+```
+
+### Multiple Return Values via Tuple - DRAFT
+Extract code that needs to return multiple values using tuples.
+```csharp
+var isValid = ValidateInput(input);
+var errorMessage = GetValidationError(input);
+var processedValue = ProcessInput(input);
+return (isValid, errorMessage, processedValue);
+// Extract: validation and processing logic returning (bool, string, object)
+```
+
+### Invalid Selection Boundaries - DRAFT
+User selects partial statements or crosses method boundaries.
+```csharp
+var x = SomeMethod(
+    parameter1,
+    // User selects from here
+    parameter2);
+var y = x + 1;
+// to here - invalid selection
+```
+
+### Variable Scope Conflicts - DRAFT
+Extracted code would create variable naming conflicts.
+```csharp
+var name = "outer";
+{
+    var name = "inner"; // conflict if extracted
+    Console.WriteLine(name);
+}
+```
+
+### Unreachable Code After Return - DRAFT
+Selection includes code after a return statement.
+```csharp
+if (condition)
+    return result;
+Console.WriteLine("This might be unreachable");
+// Extract: both statements together
+```
+
+### Missing Variable Dependencies - DRAFT
+Selected code uses variables not available in extraction scope.
+```csharp
+var localVar = GetValue();
+// ... many lines later in different scope
+Console.WriteLine(localVar); // localVar not accessible
+```
