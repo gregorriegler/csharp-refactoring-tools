@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ### 1. Expression-Only Extraction
 **Problem**: Current implementation focuses on `StatementSyntax` but fails when extracting pure expressions.
@@ -73,7 +73,7 @@ var result = someComplexCalculation + anotherComplexCalculation;
 Extract a single arithmetic expression from an assignment statement.
 
 Examples (ordered by simplicity):
-- [ ] Extract single variable: `var result = x;` → extract `x`
+- [x] Extract single variable: `var result = x;` → extract `x`
 - [ ] Extract simple addition: `var result = a + b;` → extract `a + b`
 - [ ] Extract with precedence: `var result = a + b * c;` → extract `a + b * c`
 - [ ] Extract method call: `var result = Math.Max(a, b);` → extract `Math.Max(a, b)`

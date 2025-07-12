@@ -95,6 +95,21 @@ public class Bird
         await VerifyExtract(code, CodeSelection.Parse("10:21-10:31"), "Ten");
     }
 
+    [Test]
+    public async Task CanExtractSingleVariable()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var x = 5;
+        var result = x;
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("7:21-7:22"), "GetX");
+    }
 
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
