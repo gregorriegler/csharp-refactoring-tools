@@ -67,12 +67,15 @@ var result = someComplexCalculation + anotherComplexCalculation;
 
 ## Scenarios
 
-### Simple Expression Extraction - DRAFT
+### Simple Expression Extraction - REFINED
 Extract a single arithmetic expression from an assignment statement.
-```csharp
-var result = a + b * c;
-// Extract: a + b * c
-```
+
+Examples (ordered by simplicity):
+- [ ] Extract single variable: `var result = x;` → extract `x`
+- [ ] Extract simple addition: `var result = a + b;` → extract `a + b`
+- [ ] Extract with precedence: `var result = a + b * c;` → extract `a + b * c`
+- [ ] Extract method call: `var result = Math.Max(a, b);` → extract `Math.Max(a, b)`
+- [ ] Extract nested expressions: `var result = Math.Max(a + 1, b * 2);` → extract `Math.Max(a + 1, b * 2)`
 
 ### Simple Statement Block Extraction - DRAFT
 Extract a sequence of simple statements that don't return values.
