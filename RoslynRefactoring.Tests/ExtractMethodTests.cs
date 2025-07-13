@@ -134,6 +134,14 @@ public class Calculator
         var document = DocumentTestHelper.CreateDocument(code);
         var originalFormatted = Formatter.Format((await document.GetSyntaxRootAsync())!, new AdhocWorkspace());
 
+        var sourceText = await document.GetTextAsync();
+        var lines = sourceText.Lines;
+        var startLine = lines[codeSelection.Start.Line - 1];
+        var endLine = lines[codeSelection.End.Line - 1];
+        var startPosition = startLine.Start + codeSelection.Start.Column;
+        var endPosition = endLine.Start + codeSelection.End.Column;
+        var selectedSpan = sourceText.GetSubText(new Microsoft.CodeAnalysis.Text.TextSpan(startPosition, endPosition - startPosition));
+
         var extractMethod = new ExtractMethod(codeSelection, newMethodName);
         var updatedDocument = await extractMethod.PerformAsync(document);
         var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
@@ -142,6 +150,12 @@ public class Calculator
 
 ```csharp
 {originalFormatted.ToFullString()}
+```
+
+## Selected Span
+
+```csharp
+{selectedSpan}
 ```
 
 ---

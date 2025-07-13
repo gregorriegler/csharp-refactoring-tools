@@ -20,11 +20,7 @@ public class Bird
 ## Selected Span
 
 ```csharp
-        switch (kind)
-        {
-            case 0: return 10;
-            default: throw new ArgumentOutOfRangeException();
-        }
+eturn 10;
 
 ```
 
@@ -38,18 +34,18 @@ public class Bird
     private int kind;
     public int GetSpeed()
     {
-        return ComputeSpeed();
-    }
-
-    private int ComputeSpeed()
-    {
         switch (kind)
         {
             case 0:
-                return 10;
+                return Ten();
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    private int Ten()
+    {
+        return 10;
     }
 }
 ```
