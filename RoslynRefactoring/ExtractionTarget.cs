@@ -436,8 +436,11 @@ namespace RoslynRefactoring
 
         public override (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
         {
-            // Empty implementation - return unchanged values
-            return (methodBody, returnType);
+            // Check if the extraction target modified the method body or return type
+            var finalMethodBody = modifiedMethodBody ?? methodBody;
+            var finalReturnType = modifiedReturnType ?? returnType;
+
+            return (finalMethodBody, finalReturnType);
         }
     }
 }

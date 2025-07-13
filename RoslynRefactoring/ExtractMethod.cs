@@ -58,17 +58,8 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         // Use the extraction target to handle the replacement
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, dataFlow);
 
-        // Check if the extraction target modified the method body or return type
-        if (extractionTarget is StatementExtractionTarget statementTarget)
-        {
-            var modifiedBody = statementTarget.GetModifiedMethodBody();
-            var modifiedReturnType = statementTarget.GetModifiedReturnType();
-
-            if (modifiedBody != null)
-                newMethodBody = modifiedBody;
-            if (modifiedReturnType != null)
-                returnType = modifiedReturnType;
-        }
+        // Apply any modifications from the extraction target
+        (newMethodBody, returnType) = extractionTarget.ApplyModifications(newMethodBody, returnType);
 
         // Create the method declaration with the final values
         var methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, newMethodName)
