@@ -2,9 +2,14 @@
 
 STARTER_SYMBOL=🧹
 
-Refactoring means to improve the structure of the code in tiny steps while maintaining its current observable behavior. All the tests need to keep passing after each step. Use `./test.sh` to run the tests. Treat warnings as errors.
+The goal is to identify a small step towards an improvement in the design. 
+Aim for better maintainability but avoid overengineering. 
+Favor polymorphism over repeated conditions.
+Favor value objects over tuples and other primitive data structures.
+Favor tell don't ask over properties.
+Avoid interfaces for stable dependencies.
+Avoid booleans as arguments.
 
-1. Initiate a SubTask with the prompt "Read and follow `process/plan-refactoring.md`"
-2. Creating a SubTask with the prompt "Read and follow `process/execute-refactoring.md`"
-3. Repeat step 2 until there are no more refactoring tasks left in the `refactoring-plan.md`
-4. End the current task with the message "Refactoring completed"
+1. Initiate a fresh context to come up with a small step that improves the design.
+2. In a fresh context, decompose the change to the proposed design into a plan that consists only of small refactoring steps - this context should just report back the refactoring plan.
+3. Execute the refactoring steps, creating a fresh context for each step where you run the tests before and after the changes using `./test.sh` and commit the changes using a commit message "r <message>"
