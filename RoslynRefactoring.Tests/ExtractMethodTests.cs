@@ -135,6 +135,6 @@ public class Calculator
         var extractMethod = new ExtractMethod(codeSelection, newMethodName);
         var updatedDocument = await extractMethod.PerformAsync(document);
         var formatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
-        await Verify(formatted.ToFullString());
+        await Verify(formatted.ToFullString(), extension:"md");
     }
 }
