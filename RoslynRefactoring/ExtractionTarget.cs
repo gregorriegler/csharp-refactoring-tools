@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
+using Microsoft.CodeAnalysis.Text;
 
 namespace RoslynRefactoring
 {
@@ -46,6 +47,89 @@ namespace RoslynRefactoring
         /// <param name="model">The semantic model for analysis</param>
         /// <param name="dataFlow">The data flow analysis results</param>
         public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow);
+
+        /// <summary>
+        /// Creates an appropriate ExtractionTarget based on the selected node and span
+        /// </summary>
+        /// <param name="selectedNode">The selected syntax node</param>
+        /// <param name="span">The text span of the selection</param>
+        /// <param name="block">The containing block syntax</param>
+        /// <returns>An ExtractionTarget instance (either ExpressionExtractionTarget or StatementExtractionTarget)</returns>
+        public static ExtractionTarget CreateFromSelection(SyntaxNode selectedNode, TextSpan span, BlockSyntax block)
+        {
+            var selectedStatements = new List<StatementSyntax>();
+            ExpressionSyntax? selectedExpression = null;
+
+            if (selectedNode is BlockSyntax blockNode)
+            {
+                selectedStatements = blockNode.Statements
+                    .Where(stmt => span.OverlapsWith(stmt.Span))
+                    .ToList();
+            }
+            else if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
+            {
+                // Only treat as statement extraction if the span covers the entire statement
+                // If it's a partial selection, look for expressions instead
+                if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
+                {
+                    selectedStatements.Add(singleStatement);
+                }
+            }
+            else
+            {
+                selectedStatements = selectedNode.DescendantNodesAndSelf()
+                    .OfType<StatementSyntax>()
+                    .Where(stmt => span.OverlapsWith(stmt.Span))
+                    .ToList();
+            }
+
+            // If no statements found, check if we're selecting an expression
+            if (selectedStatements.Count == 0)
+            {
+                if (selectedNode is ExpressionSyntax expression)
+                {
+                    selectedExpression = expression;
+                }
+                else
+                {
+                    // Get all expressions in the selected node and its descendants
+                    var allExpressions = selectedNode.DescendantNodesAndSelf()
+                        .OfType<ExpressionSyntax>()
+                        .ToList();
+
+                    // Try to find an expression that overlaps with or contains the span
+                    selectedExpression = allExpressions
+                        .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
+                        .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
+                        .FirstOrDefault();
+
+                    // If still not found, try looking at ancestors for expressions that contain the span
+                    if (selectedExpression == null)
+                    {
+                        selectedExpression = selectedNode.AncestorsAndSelf()
+                            .OfType<ExpressionSyntax>()
+                            .Where(expr => expr.Span.Contains(span) || span.OverlapsWith(expr.Span))
+                            .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
+                            .FirstOrDefault();
+                    }
+
+                    // Special case: if we have an EqualsValueClauseSyntax, look for the expression inside it
+                    if (selectedExpression == null && selectedNode is EqualsValueClauseSyntax equalsValue)
+                    {
+                        selectedExpression = equalsValue.Value;
+                    }
+                }
+
+                if (selectedExpression == null)
+                    throw new InvalidOperationException("No statements or expressions selected for extraction.");
+
+                return new ExpressionExtractionTarget(selectedExpression);
+            }
+            else
+            {
+                return new StatementExtractionTarget(selectedStatements, block);
+            }
+        }
     }
     /// <summary>
     /// Extraction target for expressions
