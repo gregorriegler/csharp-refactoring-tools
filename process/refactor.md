@@ -10,6 +10,6 @@ Favor tell don't ask over properties.
 Avoid interfaces for stable dependencies.
 Avoid booleans as arguments.
 
-1. Initiate a fresh context to come up with a small step that improves the design.
-2. In a fresh context, decompose the change to the proposed design into a plan that consists only of small refactoring steps - this context should just report back the refactoring plan.
-3. Execute the refactoring steps, creating a fresh context for each step where you run the tests before and after the changes using `./test.sh` and commit the changes using a commit message "r <message>"
+1. Initiate a new subtask to analyze the given code and find a small step that improves the design.
+2. Initiate a new subtask to decompose the proposed design improvement to a plan of many small refactoring steps - when the plan is ready, close the task reporting back the plan.
+3. Execute the planned refactoring steps, creating a new subtask for each step where you run the tests before and after the changes using `./test.sh` and commit the changes using a commit message "r <message>"
