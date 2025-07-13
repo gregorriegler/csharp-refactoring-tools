@@ -111,6 +111,24 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("7:21-7:22"), "GetX");
     }
 
+    [Test]
+    public async Task CanExtractExpressionWithPrecedence()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var a = 2;
+        var b = 3;
+        var c = 4;
+        var result = a + b * c;
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("9:21-9:30"), "CalculateExpression");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

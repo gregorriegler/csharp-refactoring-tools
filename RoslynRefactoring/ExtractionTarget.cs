@@ -111,10 +111,11 @@ namespace RoslynRefactoring
                         .OfType<ExpressionSyntax>()
                         .ToList();
 
-                    // Try to find an expression that overlaps with or contains the span
+                    // Try to find an expression that best matches the selection span
                     selectedExpression = allExpressions
                         .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
-                        .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
+                        .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length)) // Prefer expressions closest to selection length
+                        .ThenBy(expr => expr.Span.Length) // Then prefer smaller expressions as tiebreaker
                         .FirstOrDefault();
 
                     // If still not found, try looking at ancestors for expressions that contain the span
@@ -123,7 +124,8 @@ namespace RoslynRefactoring
                         selectedExpression = selectedNode.AncestorsAndSelf()
                             .OfType<ExpressionSyntax>()
                             .Where(expr => expr.Span.Contains(span) || span.OverlapsWith(expr.Span))
-                            .OrderBy(expr => expr.Span.Length) // Prefer smaller, more specific expressions
+                            .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length)) // Prefer expressions closest to selection length
+                            .ThenBy(expr => expr.Span.Length) // Then prefer smaller expressions as tiebreaker
                             .FirstOrDefault();
                     }
 
@@ -196,15 +198,9 @@ namespace RoslynRefactoring
             }
             else
             {
-                // Complex expression - create local variable and return it
-                var variableDeclaration = SyntaxFactory.LocalDeclarationStatement(
-                    SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
-                        .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier("a"))
-                                .WithInitializer(SyntaxFactory.EqualsValueClause(selectedExpression)))));
-
-                var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("a"));
-                return SyntaxFactory.Block(variableDeclaration, returnStatement);
+                // Complex expression - return directly without creating a local variable
+                var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
+                return SyntaxFactory.Block(returnStatement);
             }
         }
 
