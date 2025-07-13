@@ -1,4 +1,22 @@
-﻿public class Console
+﻿## Original
+
+```csharp
+
+public class Console
+{
+    public void Write()
+    {
+        Console.WriteLine("Hello World");
+    }
+}
+```
+
+---
+
+## Refactored
+
+```csharp
+public class Console
 {
     public void Write()
     {
@@ -10,3 +28,4 @@
         Console.WriteLine("Hello World");
     }
 }
+```

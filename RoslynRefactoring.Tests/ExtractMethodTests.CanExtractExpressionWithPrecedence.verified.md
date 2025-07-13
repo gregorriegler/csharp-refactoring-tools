@@ -1,4 +1,25 @@
-﻿public class Calculator
+﻿## Original
+
+```csharp
+
+public class Calculator
+{
+    public void Calculate()
+    {
+        var a = 2;
+        var b = 3;
+        var c = 4;
+        var result = a + b * c;
+    }
+}
+```
+
+---
+
+## Refactored
+
+```csharp
+public class Calculator
 {
     public void Calculate()
     {
@@ -13,3 +34,4 @@
         return a + b * c;
     }
 }
+```

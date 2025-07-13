@@ -1,4 +1,23 @@
-﻿public class Calculator
+﻿## Original
+
+```csharp
+
+public class Calculator
+{
+    public void Calculate()
+    {
+        var x = 5;
+        var result = x;
+    }
+}
+```
+
+---
+
+## Refactored
+
+```csharp
+public class Calculator
 {
     public void Calculate()
     {
@@ -11,3 +30,4 @@
         return x;
     }
 }
+```

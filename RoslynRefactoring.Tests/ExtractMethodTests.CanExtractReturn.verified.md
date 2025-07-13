@@ -1,4 +1,22 @@
-﻿public class Calculator
+﻿## Original
+
+```csharp
+
+public class Calculator
+{
+    public int Plus()
+    {
+        return 1 + 1;
+    }
+}
+```
+
+---
+
+## Refactored
+
+```csharp
+public class Calculator
 {
     public int Plus()
     {
@@ -10,3 +28,4 @@
         return 1 + 1;
     }
 }
+```

@@ -132,9 +132,26 @@ public class Calculator
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
+        var originalFormatted = Formatter.Format((await document.GetSyntaxRootAsync())!, new AdhocWorkspace());
+
         var extractMethod = new ExtractMethod(codeSelection, newMethodName);
         var updatedDocument = await extractMethod.PerformAsync(document);
-        var formatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
-        await Verify(formatted.ToFullString(), extension:"md");
+        var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
+
+        var output = $@"## Original
+
+```csharp
+{originalFormatted.ToFullString()}
+```
+
+---
+
+## Refactored
+
+```csharp
+{refactoredFormatted.ToFullString()}
+```";
+
+        await Verify(output, extension:"md");
     }
 }
