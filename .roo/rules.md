@@ -25,7 +25,7 @@ Don't be overly optimistic, but be critical and skeptical.
 - NO COMMENTS
 - private fields start with a lower case letter, not with underscores
 - NO TryXy patterns
-- No out variables 
+- No out/ref variables 
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
