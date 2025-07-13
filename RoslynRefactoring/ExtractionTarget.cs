@@ -268,7 +268,7 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            if (returnBehavior.HasReturnStatements || returnBehavior.AllPathsReturnOrThrow)
+            if (returnBehavior.RequiresReturnStatement)
             {
                 var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
                 if (containingMethod?.ReturnType != null)
@@ -308,7 +308,7 @@ namespace RoslynRefactoring
             StatementSyntax callStatement;
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
 
-            if (returnBehavior.HasReturnStatements || returnBehavior.AllPathsReturnOrThrow)
+            if (returnBehavior.RequiresReturnStatement)
             {
                 callStatement = SyntaxFactory.ReturnStatement(methodCall);
             }
@@ -434,5 +434,7 @@ namespace RoslynRefactoring
                                              && switchStatement.Sections.All(sec =>
                                                  sec.Statements.LastOrDefault() is ReturnStatementSyntax
                                                      or ThrowStatementSyntax);
+
+        public bool RequiresReturnStatement => HasReturnStatements || AllPathsReturnOrThrow;
     }
 }
