@@ -59,13 +59,13 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, dataFlow);
 
         // Apply any modifications from the extraction target
-        (newMethodBody, returnType) = extractionTarget.ApplyModifications(newMethodBody, returnType);
+        var methodSignature = extractionTarget.ApplyModifications(newMethodBody, returnType);
 
         // Create the method declaration with the final values
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, newMethodName)
+        var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
             .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
-            .WithBody(newMethodBody);
+                .WithBody(methodSignature.MethodBody);
 
         var insertionPoint = extractionTarget.GetInsertionPoint();
         editor.InsertAfter(insertionPoint, methodDeclaration);

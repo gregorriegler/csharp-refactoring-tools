@@ -59,8 +59,8 @@ namespace RoslynRefactoring
         /// </summary>
         /// <param name="methodBody">The initial method body</param>
         /// <param name="returnType">The initial return type</param>
-        /// <returns>A tuple containing the modified method body and return type</returns>
-        public abstract (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType);
+        /// <returns>A MethodSignature containing the modified method body and return type</returns>
+        public abstract MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType);
 
         /// <summary>
         /// Creates an appropriate ExtractionTarget based on the selected node and span
@@ -251,10 +251,10 @@ namespace RoslynRefactoring
             return selectedExpression;
         }
 
-        public override (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
+        public override MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
         {
             // Empty implementation - return unchanged values
-            return (methodBody, returnType);
+            return MethodSignature.Create(methodBody, returnType);
         }
     }
 
@@ -432,13 +432,13 @@ namespace RoslynRefactoring
             return selectedStatements.Last();
         }
 
-        public override (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
+        public override MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
         {
             // Check if the extraction target modified the method body or return type
             var finalMethodBody = modifiedMethodBody ?? methodBody;
             var finalReturnType = modifiedReturnType ?? returnType;
 
-            return (finalMethodBody, finalReturnType);
+            return MethodSignature.Create(finalMethodBody, finalReturnType);
         }
     }
 
