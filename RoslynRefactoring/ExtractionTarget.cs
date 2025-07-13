@@ -268,12 +268,7 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            var allPathsReturnOrThrow = selectedStatements is [SwitchStatementSyntax switchStatement]
-                                        && switchStatement.Sections.All(sec =>
-                                            sec.Statements.LastOrDefault() is ReturnStatementSyntax
-                                                or ThrowStatementSyntax);
-
-            if (returnBehavior.HasReturnStatements || allPathsReturnOrThrow)
+            if (returnBehavior.HasReturnStatements || returnBehavior.AllPathsReturnOrThrow)
             {
                 var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
                 if (containingMethod?.ReturnType != null)
@@ -310,15 +305,10 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            var allPathsReturnOrThrow = selectedStatements is [SwitchStatementSyntax switchStatement]
-                                        && switchStatement.Sections.All(sec =>
-                                            sec.Statements.LastOrDefault() is ReturnStatementSyntax
-                                                or ThrowStatementSyntax);
-
             StatementSyntax callStatement;
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
 
-            if (returnBehavior.HasReturnStatements || allPathsReturnOrThrow)
+            if (returnBehavior.HasReturnStatements || returnBehavior.AllPathsReturnOrThrow)
             {
                 callStatement = SyntaxFactory.ReturnStatement(methodCall);
             }
@@ -439,5 +429,10 @@ namespace RoslynRefactoring
         public bool HasReturnStatements => selectedStatements
             .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
             .Any();
+
+        public bool AllPathsReturnOrThrow => selectedStatements is [SwitchStatementSyntax switchStatement]
+                                             && switchStatement.Sections.All(sec =>
+                                                 sec.Statements.LastOrDefault() is ReturnStatementSyntax
+                                                     or ThrowStatementSyntax);
     }
 }
