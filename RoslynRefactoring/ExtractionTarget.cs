@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 
@@ -43,5 +44,74 @@ namespace RoslynRefactoring
         /// <param name="editor">The syntax editor for making changes</param>
         /// <param name="methodCall">The method call expression to replace the original code</param>
         public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall);
+    }
+    /// <summary>
+    /// Extraction target for expressions
+    /// </summary>
+    public class ExpressionExtractionTarget : ExtractionTarget
+    {
+        private readonly ExpressionSyntax selectedExpression;
+
+        public ExpressionExtractionTarget(ExpressionSyntax selectedExpression)
+        {
+            this.selectedExpression = selectedExpression;
+        }
+
+        public override SyntaxNode GetSelectedNode()
+        {
+            return selectedExpression;
+        }
+
+        public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
+        {
+            // For expression extraction, analyze data flow of the expression
+            var dataFlow = model?.AnalyzeDataFlow(selectedExpression);
+            if (dataFlow == null)
+                throw new InvalidOperationException("DataFlow is null.");
+            return dataFlow;
+        }
+
+        public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
+        {
+            // For expression extraction, determine return type from the expression
+            var expressionType = model.GetTypeInfo(selectedExpression).Type;
+            if (expressionType != null)
+            {
+                return SyntaxFactory.ParseTypeName(expressionType.ToDisplayString());
+            }
+            else
+            {
+                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+            }
+        }
+
+        public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
+        {
+            // For simple identifiers, return directly. For complex expressions, create a local variable first.
+            if (selectedExpression is IdentifierNameSyntax)
+            {
+                // Simple variable reference - return directly
+                var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
+                return SyntaxFactory.Block(returnStatement);
+            }
+            else
+            {
+                // Complex expression - create local variable and return it
+                var variableDeclaration = SyntaxFactory.LocalDeclarationStatement(
+                    SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
+                        .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier("a"))
+                                .WithInitializer(SyntaxFactory.EqualsValueClause(selectedExpression)))));
+
+                var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("a"));
+                return SyntaxFactory.Block(variableDeclaration, returnStatement);
+            }
+        }
+
+        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall)
+        {
+            // For expression extraction, replace the expression with the method call
+            editor.ReplaceNode(selectedExpression, methodCall);
+        }
     }
 }
