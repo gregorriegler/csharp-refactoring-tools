@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# approve.sh - Approve test results by copying .received.txt to .verified.txt files
+# approve.sh - Approve test results by copying .received.txt/.received.md to .verified.txt/.verified.md files
 # Usage: ./approve.sh [test_name_pattern]
 # Example: ./approve.sh RenameSymbol
 # Example: ./approve.sh CanRenameUnusedLocalVariable
@@ -11,7 +11,7 @@ set -e
 show_usage() {
     echo "Usage: $0 [test_name_pattern]"
     echo ""
-    echo "Approve test results by copying .received.txt files to .verified.txt files"
+    echo "Approve test results by copying .received.txt/.received.md files to .verified.txt/.verified.md files"
     echo ""
     echo "Examples:"
     echo "  $0                           # Approve all received files"
@@ -19,9 +19,9 @@ show_usage() {
     echo "  $0 CanRenameUnusedLocal     # Approve specific test"
     echo ""
     echo "The script will:"
-    echo "  1. Find all .received.txt files matching the pattern"
-    echo "  2. Copy each .received.txt to its corresponding .verified.txt"
-    echo "  3. Delete the .received.txt file after successful copy"
+    echo "  1. Find all .received.txt/.received.md files matching the pattern"
+    echo "  2. Copy each .received file to its corresponding .verified file"
+    echo "  3. Delete the .received file after successful copy"
 }
 
 # Check if help is requested
@@ -52,27 +52,37 @@ fi
 
 echo "Working in directory: $REFACTORING_DIR"
 
-# Build the find pattern
+# Build the find patterns for both .txt and .md files
 if [[ -n "$TEST_PATTERN" ]]; then
-    FIND_PATTERN="*${TEST_PATTERN}*.received.txt"
-    echo "Looking for received files matching pattern: $FIND_PATTERN"
+    FIND_PATTERN_TXT="*${TEST_PATTERN}*.received.txt"
+    FIND_PATTERN_MD="*${TEST_PATTERN}*.received.md"
+    echo "Looking for received files matching patterns: $FIND_PATTERN_TXT and $FIND_PATTERN_MD"
 else
-    FIND_PATTERN="*.received.txt"
-    echo "Looking for all received files: $FIND_PATTERN"
+    FIND_PATTERN_TXT="*.received.txt"
+    FIND_PATTERN_MD="*.received.md"
+    echo "Looking for all received files: $FIND_PATTERN_TXT and $FIND_PATTERN_MD"
 fi
 
-# Find all .received.txt files matching the pattern
-RECEIVED_FILES=$(find "$REFACTORING_DIR" -name "$FIND_PATTERN" -type f 2>/dev/null || true)
+# Find all .received.txt and .received.md files matching the pattern
+RECEIVED_FILES_TXT=$(find "$REFACTORING_DIR" -name "$FIND_PATTERN_TXT" -type f 2>/dev/null || true)
+RECEIVED_FILES_MD=$(find "$REFACTORING_DIR" -name "$FIND_PATTERN_MD" -type f 2>/dev/null || true)
+
+# Combine both results
+RECEIVED_FILES=$(printf "%s\n%s" "$RECEIVED_FILES_TXT" "$RECEIVED_FILES_MD" | grep -v '^$' || true)
 
 if [[ -z "$RECEIVED_FILES" ]]; then
-    echo "No .received.txt files found matching pattern: $FIND_PATTERN"
+    if [[ -n "$TEST_PATTERN" ]]; then
+        echo "No .received.txt/.received.md files found matching patterns: $FIND_PATTERN_TXT and $FIND_PATTERN_MD"
+    else
+        echo "No .received.txt/.received.md files found matching patterns: $FIND_PATTERN_TXT and $FIND_PATTERN_MD"
+    fi
     echo ""
     echo "This could mean:"
     echo "  - All tests are passing (no received files generated)"
     echo "  - The pattern doesn't match any files"
     echo "  - Tests haven't been run yet"
     echo ""
-    echo "To generate .received.txt files, run failing tests first:"
+    echo "To generate .received files, run failing tests first:"
     echo "  dotnet test"
     exit 0
 fi
@@ -89,18 +99,25 @@ while IFS= read -r received_file; do
     if [[ -z "$received_file" ]]; then
         continue
     fi
-    
+
     # Generate the corresponding verified file name
-    verified_file="${received_file%.received.txt}.verified.txt"
-    
+    if [[ "$received_file" == *.received.txt ]]; then
+        verified_file="${received_file%.received.txt}.verified.txt"
+    elif [[ "$received_file" == *.received.md ]]; then
+        verified_file="${received_file%.received.md}.verified.md"
+    else
+        echo "  ⚠ Warning: Unknown file extension for $received_file"
+        continue
+    fi
+
     echo "Approving: $(basename "$received_file")"
     echo "  From: $received_file"
     echo "  To:   $verified_file"
-    
+
     # Copy received to verified
     if cp "$received_file" "$verified_file"; then
         echo "  ✓ Copied successfully"
-        
+
         # Remove the received file
         if rm "$received_file"; then
             echo "  ✓ Removed received file"
