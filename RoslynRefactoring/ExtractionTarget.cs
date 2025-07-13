@@ -49,6 +49,12 @@ namespace RoslynRefactoring
         public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow);
 
         /// <summary>
+        /// Gets the syntax node where the new extracted method should be inserted
+        /// </summary>
+        /// <returns>The syntax node to insert the new method after</returns>
+        public abstract SyntaxNode GetInsertionPoint();
+
+        /// <summary>
         /// Creates an appropriate ExtractionTarget based on the selected node and span
         /// </summary>
         /// <param name="selectedNode">The selected syntax node</param>
@@ -198,6 +204,19 @@ namespace RoslynRefactoring
         {
             // For expression extraction, replace the expression with the method call
             editor.ReplaceNode(selectedExpression, methodCall);
+        }
+
+        public override SyntaxNode GetInsertionPoint()
+        {
+            // Find the containing method using selectedExpression.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()
+            var containingMethod = selectedExpression.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+            if (containingMethod != null)
+            {
+                return containingMethod;
+            }
+
+            // Fallback to the selected expression itself if no method found
+            return selectedExpression;
         }
     }
 
@@ -386,6 +405,19 @@ namespace RoslynRefactoring
             editor.ReplaceNode(selectedStatements.First(), callStatement);
             foreach (var stmt in selectedStatements.Skip(1))
                 editor.RemoveNode(stmt);
+        }
+
+        public override SyntaxNode GetInsertionPoint()
+        {
+            // Find the method node using containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()
+            var methodNode = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+            if (methodNode != null)
+            {
+                return methodNode;
+            }
+
+            // Fall back to the last selected statement if no method found
+            return selectedStatements.Last();
         }
     }
 }

@@ -76,21 +76,8 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
             .WithBody(newMethodBody);
 
-        var methodNode = block.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-        if (methodNode != null)
-        {
-            editor.InsertAfter(methodNode, methodDeclaration);
-        }
-        else
-        {
-            // For expression extraction, insert after the containing method
-            var targetNode = extractionTarget.GetSelectedNode();
-            var containingMethod = targetNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-            if (containingMethod != null)
-            {
-                editor.InsertAfter(containingMethod, methodDeclaration);
-            }
-        }
+        var insertionPoint = extractionTarget.GetInsertionPoint();
+        editor.InsertAfter(insertionPoint, methodDeclaration);
 
         var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
 
