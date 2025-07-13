@@ -237,6 +237,7 @@ namespace RoslynRefactoring
     {
         private readonly List<StatementSyntax> selectedStatements;
         private readonly BlockSyntax containingBlock;
+        private readonly ReturnBehavior returnBehavior;
         private BlockSyntax? modifiedMethodBody;
         private TypeSyntax? modifiedReturnType;
 
@@ -244,6 +245,7 @@ namespace RoslynRefactoring
         {
             this.selectedStatements = selectedStatements;
             this.containingBlock = containingBlock;
+            this.returnBehavior = new ReturnBehavior(selectedStatements);
         }
 
         public override SyntaxNode GetSelectedNode()
@@ -266,16 +268,12 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            var containsReturnStatements = selectedStatements
-                .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
-                .Any();
-
             var allPathsReturnOrThrow = selectedStatements is [SwitchStatementSyntax switchStatement]
                                         && switchStatement.Sections.All(sec =>
                                             sec.Statements.LastOrDefault() is ReturnStatementSyntax
                                                 or ThrowStatementSyntax);
 
-            if (containsReturnStatements || allPathsReturnOrThrow)
+            if (returnBehavior.HasReturnStatements || allPathsReturnOrThrow)
             {
                 var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
                 if (containingMethod?.ReturnType != null)
@@ -312,10 +310,6 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            var containsReturnStatements = selectedStatements
-                .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
-                .Any();
-
             var allPathsReturnOrThrow = selectedStatements is [SwitchStatementSyntax switchStatement]
                                         && switchStatement.Sections.All(sec =>
                                             sec.Statements.LastOrDefault() is ReturnStatementSyntax
@@ -324,7 +318,7 @@ namespace RoslynRefactoring
             StatementSyntax callStatement;
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
 
-            if (containsReturnStatements || allPathsReturnOrThrow)
+            if (returnBehavior.HasReturnStatements || allPathsReturnOrThrow)
             {
                 callStatement = SyntaxFactory.ReturnStatement(methodCall);
             }
@@ -435,8 +429,15 @@ namespace RoslynRefactoring
     /// </summary>
     public class ReturnBehavior
     {
+        private readonly List<StatementSyntax> selectedStatements;
+
         public ReturnBehavior(List<StatementSyntax> statements)
         {
+            selectedStatements = statements;
         }
+
+        public bool HasReturnStatements => selectedStatements
+            .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
+            .Any();
     }
 }
