@@ -129,6 +129,23 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("9:21-9:30"), "CalculateExpression");
     }
 
+    [Test]
+    public async Task CanExtractMethodCall()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var a = 2;
+        var b = 3;
+        var result = Math.Max(a, b);
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("8:21-8:35"), "GetMaxValue");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

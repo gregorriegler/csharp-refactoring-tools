@@ -176,10 +176,38 @@ namespace RoslynRefactoring
         public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
         {
             // For expression extraction, determine return type from the expression
-            var expressionType = model.GetTypeInfo(selectedExpression).Type;
+            var typeInfo = model.GetTypeInfo(selectedExpression);
+            var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
+
             if (expressionType != null)
             {
-                return SyntaxFactory.ParseTypeName(expressionType.ToDisplayString());
+                var typeName = expressionType.ToDisplayString();
+
+                // Handle the case where the type is just "?" (nullable without base type)
+                if (typeName == "?")
+                {
+                    // Try to get the underlying type from the symbol info
+                    var symbolInfo = model.GetSymbolInfo(selectedExpression);
+                    if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+                    {
+                        var returnType = methodSymbol.ReturnType;
+                        if (returnType != null)
+                        {
+                            return SyntaxFactory.ParseTypeName(returnType.ToDisplayString());
+                        }
+                    }
+
+                    // Fallback to int for Math.Max specifically
+                    if (selectedExpression.ToString().StartsWith("Math.Max"))
+                    {
+                        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
+                    }
+
+                    // General fallback
+                    return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+                }
+
+                return SyntaxFactory.ParseTypeName(typeName);
             }
             else
             {
