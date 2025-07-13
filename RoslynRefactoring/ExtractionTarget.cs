@@ -55,6 +55,14 @@ namespace RoslynRefactoring
         public abstract SyntaxNode GetInsertionPoint();
 
         /// <summary>
+        /// Applies any necessary modifications to the extracted method body and return type
+        /// </summary>
+        /// <param name="methodBody">The initial method body</param>
+        /// <param name="returnType">The initial return type</param>
+        /// <returns>A tuple containing the modified method body and return type</returns>
+        public abstract (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType);
+
+        /// <summary>
         /// Creates an appropriate ExtractionTarget based on the selected node and span
         /// </summary>
         /// <param name="selectedNode">The selected syntax node</param>
