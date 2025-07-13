@@ -429,4 +429,14 @@ namespace RoslynRefactoring
             return (finalMethodBody, finalReturnType);
         }
     }
+
+    /// <summary>
+    /// Value object that encapsulates return behavior analysis logic
+    /// </summary>
+    public class ReturnBehavior
+    {
+        public ReturnBehavior(List<StatementSyntax> statements)
+        {
+        }
+    }
 }
