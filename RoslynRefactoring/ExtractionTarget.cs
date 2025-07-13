@@ -250,16 +250,6 @@ namespace RoslynRefactoring
             this.containingBlock = containingBlock;
         }
 
-        /// <summary>
-        /// Gets the modified method body if it was updated during replacement logic
-        /// </summary>
-        public BlockSyntax? GetModifiedMethodBody() => modifiedMethodBody;
-
-        /// <summary>
-        /// Gets the modified return type if it was updated during replacement logic
-        /// </summary>
-        public TypeSyntax? GetModifiedReturnType() => modifiedReturnType;
-
         public override SyntaxNode GetSelectedNode()
         {
             return selectedStatements.First();
