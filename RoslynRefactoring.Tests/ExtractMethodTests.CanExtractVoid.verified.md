@@ -11,6 +11,13 @@ public class Console
 }
 ```
 
+## Selected Span
+
+```csharp
+        Console.WriteLine("Hello World");
+  
+```
+
 ---
 
 ## Refactored

@@ -17,6 +17,13 @@ public class Bird
 }
 ```
 
+## Selected Span
+
+```csharp
+eturn 10;
+
+```
+
 ---
 
 ## Refactored

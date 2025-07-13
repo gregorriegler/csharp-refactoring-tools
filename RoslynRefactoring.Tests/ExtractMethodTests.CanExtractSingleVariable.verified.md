@@ -12,6 +12,12 @@ public class Calculator
 }
 ```
 
+## Selected Span
+
+```csharp
+x
+```
+
 ---
 
 ## Refactored
