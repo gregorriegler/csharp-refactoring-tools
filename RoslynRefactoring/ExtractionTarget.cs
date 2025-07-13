@@ -226,6 +226,12 @@ namespace RoslynRefactoring
             // Fallback to the selected expression itself if no method found
             return selectedExpression;
         }
+
+        public override (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
+        {
+            // Empty implementation - return unchanged values
+            return (methodBody, returnType);
+        }
     }
 
     /// <summary>
@@ -426,6 +432,12 @@ namespace RoslynRefactoring
 
             // Fall back to the last selected statement if no method found
             return selectedStatements.Last();
+        }
+
+        public override (BlockSyntax methodBody, TypeSyntax returnType) ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
+        {
+            // Empty implementation - return unchanged values
+            return (methodBody, returnType);
         }
     }
 }
