@@ -35,10 +35,6 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
     {
-        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
-
         if (returnBehavior.RequiresReturnStatement)
         {
             var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
@@ -46,6 +42,9 @@ public class StatementExtractionTarget : ExtractionTarget
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
+        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
+            .OfType<ILocalSymbol>()
+            .ToList();
         if (returns.Count == 0)
         {
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
