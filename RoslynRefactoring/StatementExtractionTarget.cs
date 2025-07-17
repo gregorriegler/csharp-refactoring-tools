@@ -13,7 +13,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
 
     public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
     {
-        var dataFlow = model?.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
+        var dataFlow = model.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
         if (dataFlow == null)
             throw new InvalidOperationException("DataFlow is null.");
         return dataFlow;
@@ -54,8 +54,9 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
-    public override BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
+    public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
     {
+        var returns = GetReturns(dataFlow);
         if (returns.Count != 0)
         {
             return returns.FirstOrDefault() is { } returnSymbol
@@ -76,17 +77,20 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         return newMethodBody;
     }
 
-    public override SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns)
+    public override SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow)
     {
-        var methodCall = CreateMethodCall(methodName, parameters);
+        var methodCall = CreateMethodCall(methodName, GetParameters(dataFlow));
         if (returnBehavior.RequiresReturnStatement)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
         }
+
+        var returns = GetReturns(dataFlow);
         if (returns.Count == 0)
         {
             return GetCallStatement(methodCall);
         }
+
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
             return CreateLocalReturnStatement(methodCall, localReturnSymbol);

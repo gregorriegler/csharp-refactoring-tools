@@ -25,45 +25,38 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var root = await document.GetSyntaxRootAsync();
         if (root == null)
             throw new InvalidOperationException("SyntaxRoot is null.");
-
+        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
         var selectedNode = root.FindNode(span);
 
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
         if (block == null)
             throw new InvalidOperationException("Selected statements are not inside a block.");
 
-        var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
-
         var model = await document.GetSemanticModelAsync();
         if (model == null)
             throw new InvalidOperationException("SemanticModel is null.");
 
+        var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
         var dataFlow = extractionTarget.AnalyzeDataFlow(model);
-
-        var parameters = dataFlow.ReadInside.Except(dataFlow.WrittenInside)
-            .OfType<ILocalSymbol>()
-            .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
-                .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
-
-
-        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
-        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
-
-        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, parameters, model, returns);
-
+        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, dataFlow);
         extractionTarget.ReplaceInEditor(editor, replacementNode);
-        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        var methodBody = extractionTarget.CreateMethodBody(returns);
-
+        var methodDeclaration = CreateMethodDeclaration(extractionTarget, dataFlow, model);
         var insertionPoint = extractionTarget.GetInsertionPoint();
-        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
         editor.InsertAfter(insertionPoint, methodDeclaration);
 
         var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
         Console.WriteLine($"✅ Extracted method '{newMethodName}'");
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private MethodDeclarationSyntax CreateMethodDeclaration(ExtractionTarget extractionTarget, DataFlowAnalysis dataFlow,
+        SemanticModel model)
+    {
+        var methodBody = extractionTarget.CreateMethodBody(dataFlow);
+        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
+        var parameters = ExtractionTarget.GetParameters(dataFlow);
+        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
+        return methodDeclaration;
     }
 
     private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)

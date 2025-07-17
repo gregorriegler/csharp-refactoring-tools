@@ -12,9 +12,9 @@ public abstract class ExtractionTarget
 
         public abstract TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow);
 
-        public abstract BlockSyntax CreateMethodBody(List<ILocalSymbol> returns);
+        public abstract BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow);
 
-        public abstract SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns);
+        public abstract SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow);
 
         public abstract void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode);
 
@@ -119,4 +119,19 @@ public abstract class ExtractionTarget
                 SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
                     SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
         }
-}
+
+        public static List<ILocalSymbol> GetReturns(DataFlowAnalysis dataFlow)
+        {
+            return dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
+                .OfType<ILocalSymbol>()
+                .ToList();
+        }
+
+        public static List<ParameterSyntax> GetParameters(DataFlowAnalysis dataFlow)
+        {
+            return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
+                .OfType<ILocalSymbol>()
+                .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
+                    .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
+        }
+    }

@@ -9,7 +9,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
 {
     public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
         {
-            var dataFlow = model?.AnalyzeDataFlow(selectedExpression);
+            var dataFlow = model.AnalyzeDataFlow(selectedExpression);
             if (dataFlow == null)
                 throw new InvalidOperationException("DataFlow is null.");
             return dataFlow;
@@ -43,15 +43,15 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
                 : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-        public override BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
+        public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns)
+        public override SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow)
         {
-            return CreateMethodCall(methodName, parameters);
+            return CreateMethodCall(methodName, GetParameters(dataFlow));
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
