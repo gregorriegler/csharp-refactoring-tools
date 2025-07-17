@@ -86,6 +86,19 @@ public class StatementExtractionTarget : ExtractionTarget
         }
         else if (returns.Count == 0)
         {
+            callStatement = GetCallStatement(methodCall);
+        }
+        else if (returns.FirstOrDefault() is { } localReturnSymbol)
+        {
+            callStatement = CreateLocalReturnStatement(methodCall, localReturnSymbol);
+        }
+        else
+        {
+            throw new InvalidOperationException("Unsupported return symbol type.");
+        }
+
+        if (returns.Count == 0)
+        {
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
             if (selectedStatements.Count == 1 &&
                 selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
@@ -95,29 +108,33 @@ public class StatementExtractionTarget : ExtractionTarget
                 {
                     modifiedMethodBody = newMethodBody.AddStatements(
                         SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
+                }
+            }
+        }
 
-                    if (variable.Initializer?.Value != null)
+        if (returns.FirstOrDefault() is { } returnSymbol)
+        {
+            modifiedMethodBody = SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
+        }
+
+
+        if (returns.Count == 0)
+        {
+            if (selectedStatements.Count == 1 &&
+                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
+            {
+                var variable = localDecl.Declaration.Variables.FirstOrDefault();
+                if (variable?.Initializer?.Value != null)
+                {
+                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null)
                     {
-                        var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-                        if (typeInfo.Type != null)
-                        {
-                            modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                        }
+                        modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
                     }
                 }
             }
+        }
 
-            callStatement = GetCallStatement(methodCall);
-        }
-        else if (returns.FirstOrDefault() is { } localReturnSymbol)
-        {
-            modifiedMethodBody = SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name)));
-            callStatement = CreateLocalReturnStatement(methodCall, localReturnSymbol);
-        }
-        else
-        {
-            throw new InvalidOperationException("Unsupported return symbol type.");
-        }
 
         return callStatement;
     }
