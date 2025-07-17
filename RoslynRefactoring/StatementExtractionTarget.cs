@@ -67,8 +67,16 @@ public class StatementExtractionTarget : ExtractionTarget
         return ModifiedMethodBody ?? SyntaxFactory.Block(selectedStatements);
     }
 
-    public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall,
-        SemanticModel model, List<ILocalSymbol> returns)
+    public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+    {
+        var callStatement = DoStuff(methodCall, model, returns);
+
+        editor.ReplaceNode(selectedStatements.First(), callStatement);
+        foreach (var stmt in selectedStatements.Skip(1))
+            editor.RemoveNode(stmt);
+    }
+
+    private StatementSyntax DoStuff(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
     {
         StatementSyntax callStatement;
 
@@ -78,7 +86,28 @@ public class StatementExtractionTarget : ExtractionTarget
         }
         else if (returns.Count == 0)
         {
-            callStatement = HandleNoReturnsCase(methodCall, model, SyntaxFactory.Block(selectedStatements));
+            var newMethodBody = SyntaxFactory.Block(selectedStatements);
+            if (selectedStatements.Count == 1 &&
+                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
+            {
+                var variable = localDecl.Declaration.Variables.FirstOrDefault();
+                if (variable != null)
+                {
+                    modifiedMethodBody = newMethodBody.AddStatements(
+                        SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
+
+                    if (variable.Initializer?.Value != null)
+                    {
+                        var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                        if (typeInfo.Type != null)
+                        {
+                            modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                        }
+                    }
+                }
+            }
+
+            callStatement = GetCallStatement(methodCall);
         }
         else if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
@@ -90,13 +119,10 @@ public class StatementExtractionTarget : ExtractionTarget
             throw new InvalidOperationException("Unsupported return symbol type.");
         }
 
-        editor.ReplaceNode(selectedStatements.First(), callStatement);
-        foreach (var stmt in selectedStatements.Skip(1))
-            editor.RemoveNode(stmt);
+        return callStatement;
     }
 
-    private StatementSyntax HandleNoReturnsCase(InvocationExpressionSyntax methodCall, SemanticModel model,
-        BlockSyntax newMethodBody)
+    private StatementSyntax GetCallStatement(InvocationExpressionSyntax methodCall)
     {
         if (selectedStatements.Count != 1 ||
             selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
@@ -111,20 +137,6 @@ public class StatementExtractionTarget : ExtractionTarget
         }
 
         var variableType = localDecl.Declaration.Type;
-
-        modifiedMethodBody = newMethodBody.AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
-
-        if (variable.Initializer?.Value == null)
-            return SyntaxFactory.LocalDeclarationStatement(
-                SyntaxFactory.VariableDeclaration(variableType)
-                    .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
-                            .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
-        var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-        if (typeInfo.Type != null)
-        {
-            modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-        }
 
         return SyntaxFactory.LocalDeclarationStatement(
             SyntaxFactory.VariableDeclaration(variableType)
