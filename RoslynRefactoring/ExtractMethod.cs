@@ -48,6 +48,10 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var newMethodBody = extractionTarget.CreateMethodBody(dataFlow);
 
+        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
+            .OfType<ILocalSymbol>()
+            .ToList();
+
         var invocationExpressionSyntax = SyntaxFactory.InvocationExpression(
             SyntaxFactory.IdentifierName(newMethodName),
             SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
@@ -55,8 +59,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
 
-        // Use the extraction target to handle the replacement
-        extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, dataFlow);
+        extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
         // Apply any modifications from the extraction target
         var methodSignature = extractionTarget.ApplyModifications(newMethodBody, returnType);

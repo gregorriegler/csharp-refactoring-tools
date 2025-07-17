@@ -45,8 +45,8 @@ namespace RoslynRefactoring
         /// <param name="editor">The syntax editor for making changes</param>
         /// <param name="methodCall">The method call expression to replace the original code</param>
         /// <param name="model">The semantic model for analysis</param>
-        /// <param name="dataFlow">The data flow analysis results</param>
-        public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow);
+        /// <param name="returns">The local symbols that flow out and are written inside</param>
+        public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
 
         /// <summary>
         /// Gets the syntax node where the new extracted method should be inserted
@@ -225,9 +225,8 @@ namespace RoslynRefactoring
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow)
+        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
         {
-            // For expression extraction, replace the expression with the method call
             editor.ReplaceNode(selectedExpression, methodCall);
         }
 
@@ -311,12 +310,8 @@ namespace RoslynRefactoring
             return SyntaxFactory.Block(selectedStatements);
         }
 
-        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow)
+        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
         {
-            var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-                .OfType<ILocalSymbol>()
-                .ToList();
-
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
             StatementSyntax callStatement;
 
