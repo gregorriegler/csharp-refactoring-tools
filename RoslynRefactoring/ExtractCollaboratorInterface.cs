@@ -74,7 +74,9 @@ public class ExtractCollaboratorInterface : IRefactoring
         var usedProperties = FindUsedProperties(targetClass, typeName);
 
         if (!usedMethods.Any() && !usedProperties.Any())
+        {
             return null;
+        }
 
         return new CollaboratorInfo(targetClass, typeName, usedMethods, usedProperties, null, null);
     }
@@ -90,11 +92,15 @@ public class ExtractCollaboratorInterface : IRefactoring
 
         var fieldDeclaration = nodeAtSelection.AncestorsAndSelf().OfType<FieldDeclarationSyntax>().FirstOrDefault();
         if (fieldDeclaration != null && IsLikelyCollaboratorType(fieldDeclaration.Declaration.Type))
+        {
             return fieldDeclaration.Declaration.Type;
+        }
 
         var propertyDeclaration = nodeAtSelection.AncestorsAndSelf().OfType<PropertyDeclarationSyntax>().FirstOrDefault();
         if (propertyDeclaration != null && IsLikelyCollaboratorType(propertyDeclaration.Type))
+        {
             return propertyDeclaration.Type;
+        }
 
         return FindFirstCollaboratorFieldType(documentRoot);
     }
@@ -174,7 +180,9 @@ public class ExtractCollaboratorInterface : IRefactoring
             {
                 var methodName = memberAccess.Name.Identifier.Text;
                 if (!methodNames.Contains(methodName))
+                {
                     methodNames.Add(methodName);
+                }
             }
         }
 
@@ -201,7 +209,9 @@ public class ExtractCollaboratorInterface : IRefactoring
             {
                 var propertyName = memberAccess.Name.Identifier.Text;
                 if (!propertyNames.Contains(propertyName))
+                {
                     propertyNames.Add(propertyName);
+                }
             }
         }
 
@@ -216,7 +226,9 @@ public class ExtractCollaboratorInterface : IRefactoring
                         fd.Declaration.Variables.Any(v => v.Identifier.Text == fieldName));
 
         if (fieldDeclarations.Any())
+        {
             return true;
+        }
 
         var propertyDeclarations = targetClass.DescendantNodes()
             .OfType<PropertyDeclarationSyntax>()

@@ -64,7 +64,9 @@ public class BreakHardDependency : IRefactoring
         var (targetClass, singletonFields) = await FindTargetClassAndSingletonFields(document, documentRoot);
 
         if (targetClass == null || !singletonFields.Any())
+        {
             return document;
+        }
 
         var updatedClass = RefactorClass(targetClass, singletonFields);
         documentEditor.ReplaceNode(targetClass, updatedClass);
@@ -79,7 +81,9 @@ public class BreakHardDependency : IRefactoring
     {
         var selectionResult = await TryFindFieldFromSelection(document, syntaxRoot);
         if (selectionResult.TargetClass != null && selectionResult.SingletonFields.Any())
+        {
             return selectionResult;
+        }
 
         return FindAllSingletonFields(syntaxRoot);
     }
@@ -95,7 +99,9 @@ public class BreakHardDependency : IRefactoring
             var lines = text.Lines;
 
             if (!_selection.IsInRange(lines))
+            {
                 throw new SelectionException("Selection out of range");
+            }
 
             var span = GetTextSpanFromSelection(lines);
             if (span == null)
@@ -175,7 +181,9 @@ public class BreakHardDependency : IRefactoring
             var singletonFields = GetSingletonFieldsFromClass(classDeclaration);
 
             if (singletonFields.Any())
+            {
                 return (classDeclaration, singletonFields);
+            }
         }
 
         return (null, []);
@@ -502,7 +510,9 @@ public class BreakHardDependency : IRefactoring
     private string ToCamelCase(string text)
     {
         if (string.IsNullOrEmpty(text))
+        {
             return text;
+        }
 
         return $"{char.ToLower(text[0])}{text[1..]}";
     }

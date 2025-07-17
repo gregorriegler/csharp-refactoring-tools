@@ -34,7 +34,10 @@ public class MoveMemberUp : IRefactoring
     public async Task<Document> PerformAsync(Document document)
     {
         var root = await document.GetSyntaxRootAsync();
-        if (root == null) return document;
+        if (root == null)
+        {
+            return document;
+        }
 
         var derivedClass = root.DescendantNodes()
             .OfType<ClassDeclarationSyntax>()
@@ -83,7 +86,10 @@ public class MoveMemberUp : IRefactoring
         ClassDeclarationSyntax baseClass, MethodDeclarationSyntax memberToMove)
     {
         var updatedDerivedClass = derivedClass.RemoveNode(memberToMove, SyntaxRemoveOptions.KeepNoTrivia);
-        if (updatedDerivedClass == null) return root;
+        if (updatedDerivedClass == null)
+        {
+            return root;
+        }
 
         var updatedBaseClass = baseClass.AddMembers(memberToMove);
 

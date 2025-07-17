@@ -18,15 +18,30 @@ public class InlineMethod(Cursor cursor) : IRefactoring
     public async Task<Document> PerformAsync(Document document)
     {
         var root = await document.GetSyntaxRootAsync();
-        if (root == null) return document;
+        if (root == null)
+        {
+            return document;
+        }
         var semanticModel = await document.GetSemanticModelAsync();
-        if (semanticModel == null) return document;
+        if (semanticModel == null)
+        {
+            return document;
+        }
         var invocation = FindInvocationAtCursor(root, cursor);
-        if (invocation == null) return document;
+        if (invocation == null)
+        {
+            return document;
+        }
         var methodSymbol = ValidateAndGetMethodSymbol(semanticModel, invocation);
-        if (methodSymbol == null) return document;
+        if (methodSymbol == null)
+        {
+            return document;
+        }
         var (methodDeclaration, methodBody, _) = await PrepareMethodForInlining(methodSymbol, invocation);
-        if (methodDeclaration == null || methodBody == null) return document;
+        if (methodDeclaration == null || methodBody == null)
+        {
+            return document;
+        }
         var allInvocations = ProcessAllInvocations(root, semanticModel, methodSymbol, methodDeclaration, methodBody);
         return document.WithSyntaxRoot(allInvocations);
     }
@@ -35,11 +50,17 @@ public class InlineMethod(Cursor cursor) : IRefactoring
     {
         (SyntaxNode? root, SemanticModel? semanticModel) ret;
         var root1 = await document.GetSyntaxRootAsync();
-        if (root1 == null) ret = (null, null);
+        if (root1 == null)
+        {
+            ret = (null, null);
+        }
         else
         {
             var semanticModel1 = await document.GetSemanticModelAsync();
-            if (semanticModel1 == null) ret = (null, null);
+            if (semanticModel1 == null)
+            {
+                ret = (null, null);
+            }
             else
             {
                 ret = (root: root1, semanticModel: semanticModel1);
@@ -47,16 +68,28 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         }
 
         var (root, semanticModel) = ret;
-        if (root == null || semanticModel == null) return null;
+        if (root == null || semanticModel == null)
+        {
+            return null;
+        }
 
         var invocation = FindInvocationAtCursor(root, cursor);
-        if (invocation == null) return null;
+        if (invocation == null)
+        {
+            return null;
+        }
 
         var methodSymbol = ValidateAndGetMethodSymbol(semanticModel, invocation);
-        if (methodSymbol == null) return null;
+        if (methodSymbol == null)
+        {
+            return null;
+        }
 
         var (methodDeclaration, methodBody, _) = await PrepareMethodForInlining(methodSymbol, invocation);
-        if (methodDeclaration == null || methodBody == null) return null;
+        if (methodDeclaration == null || methodBody == null)
+        {
+            return null;
+        }
 
         return (root, semanticModel, invocation, methodSymbol, methodDeclaration, methodBody);
     }
@@ -116,7 +149,9 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         var typeName = ExtractTypeName(memberAccess.Expression);
 
         if (string.IsNullOrEmpty(typeName))
+        {
             return null;
+        }
 
         return SearchInCompilation(semanticModel.Compilation, typeName, methodName);
     }
@@ -161,7 +196,10 @@ public class InlineMethod(Cursor cursor) : IRefactoring
     private static async Task<(MethodDeclarationSyntax? methodDeclaration, BlockSyntax? methodBody, Dictionary<string, ExpressionSyntax>? parameterMap)> PrepareMethodForInlining(IMethodSymbol methodSymbol, InvocationExpressionSyntax invocation)
     {
         var methodDeclaration = await FindMethodDeclarationAsync(methodSymbol);
-        if (methodDeclaration == null) return (null, null, null);
+        if (methodDeclaration == null)
+        {
+            return (null, null, null);
+        }
 
         var methodBody = methodDeclaration.Body ??
                          (methodDeclaration.ExpressionBody != null
@@ -169,7 +207,10 @@ public class InlineMethod(Cursor cursor) : IRefactoring
                                  SyntaxFactory.ReturnStatement(methodDeclaration.ExpressionBody.Expression))
                              : null);
 
-        if (methodBody == null) return (null, null, null);
+        if (methodBody == null)
+        {
+            return (null, null, null);
+        }
 
         var parameterMap = CreateParameterMapping(methodDeclaration, invocation);
 
@@ -300,7 +341,10 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         List<StatementSyntax> inlinedStatements)
     {
         var containingStatement = invocation.FirstAncestorOrSelf<StatementSyntax>();
-        if (containingStatement == null) return root;
+        if (containingStatement == null)
+        {
+            return root;
+        }
 
         var newStatements = inlinedStatements.Select(s => s.WithTriviaFrom(containingStatement));
 

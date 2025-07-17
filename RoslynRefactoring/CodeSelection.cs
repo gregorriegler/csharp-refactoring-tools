@@ -16,7 +16,9 @@ public record CodeSelection
     public static CodeSelection Create(Cursor start, Cursor end)
     {
         if (!IsValid(start, end))
+        {
             throw new InvalidOperationException("Invalid selection: line numbers must be greater than 0");
+        }
         return new CodeSelection(start, end);
     }
 
@@ -49,7 +51,9 @@ public record Cursor(int Line, int Column)
         if (parts.Length != 2)
             throw new InvalidOperationException("Cursor not in the expected format N:M");
         if (!int.TryParse(parts[0], out var line) || !int.TryParse(parts[1], out var column))
+        {
             throw new InvalidOperationException("Could not parse Cursor");
+        }
         return new Cursor(line, column);
     }
 }

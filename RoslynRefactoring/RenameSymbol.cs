@@ -34,7 +34,10 @@ public class RenameSymbol : IRefactoring
     public async Task<Document> PerformAsync(Document document)
     {
         var root = await document.GetSyntaxRootAsync();
-        if (root == null) return document;
+        if (root == null)
+        {
+            return document;
+        }
 
         var position = await GetCursorPosition(document);
         var token = root.FindToken(position);
@@ -174,7 +177,10 @@ public class RenameSymbol : IRefactoring
             foreach (var doc in project.Documents)
             {
                 var docRoot = await doc.GetSyntaxRootAsync();
-                if (docRoot == null) continue;
+                if (docRoot == null)
+                {
+                    continue;
+                }
 
                 List<SyntaxNode> methodReferences = [];
 
