@@ -69,34 +69,37 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
     {
-        var callStatement = DoStuff(methodCall, model, returns);
+        ModifyMethodBody(returns);
+        ModifyReturnType(model, returns);
+        var callStatement = StatementSyntax(methodCall, returns);
 
         editor.ReplaceNode(selectedStatements.First(), callStatement);
         foreach (var stmt in selectedStatements.Skip(1))
             editor.RemoveNode(stmt);
     }
 
-    private StatementSyntax DoStuff(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+    private void ModifyReturnType(SemanticModel model, List<ILocalSymbol> returns)
     {
-        StatementSyntax callStatement;
+        if (returns.Count == 0)
+        {
+            if (selectedStatements.Count == 1 &&
+                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
+            {
+                var variable = localDecl.Declaration.Variables.FirstOrDefault();
+                if (variable?.Initializer?.Value != null)
+                {
+                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null)
+                    {
+                        modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                    }
+                }
+            }
+        }
+    }
 
-        if (returnBehavior.RequiresReturnStatement)
-        {
-            callStatement = SyntaxFactory.ReturnStatement(methodCall);
-        }
-        else if (returns.Count == 0)
-        {
-            callStatement = GetCallStatement(methodCall);
-        }
-        else if (returns.FirstOrDefault() is { } localReturnSymbol)
-        {
-            callStatement = CreateLocalReturnStatement(methodCall, localReturnSymbol);
-        }
-        else
-        {
-            throw new InvalidOperationException("Unsupported return symbol type.");
-        }
-
+    private void ModifyMethodBody(List<ILocalSymbol> returns)
+    {
         if (returns.Count == 0)
         {
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
@@ -116,27 +119,23 @@ public class StatementExtractionTarget : ExtractionTarget
         {
             modifiedMethodBody = SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
         }
+    }
 
-
+    private StatementSyntax StatementSyntax(InvocationExpressionSyntax methodCall, List<ILocalSymbol> returns)
+    {
+        if (returnBehavior.RequiresReturnStatement)
+        {
+            return SyntaxFactory.ReturnStatement(methodCall);
+        }
         if (returns.Count == 0)
         {
-            if (selectedStatements.Count == 1 &&
-                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
-            {
-                var variable = localDecl.Declaration.Variables.FirstOrDefault();
-                if (variable?.Initializer?.Value != null)
-                {
-                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null)
-                    {
-                        modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                    }
-                }
-            }
+            return GetCallStatement(methodCall);
         }
-
-
-        return callStatement;
+        if (returns.FirstOrDefault() is { } localReturnSymbol)
+        {
+            return CreateLocalReturnStatement(methodCall, localReturnSymbol);
+        }
+        throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
     private StatementSyntax GetCallStatement(InvocationExpressionSyntax methodCall)
