@@ -10,20 +10,13 @@ public class StatementExtractionTarget : ExtractionTarget
     private readonly List<StatementSyntax> selectedStatements;
     private readonly BlockSyntax containingBlock;
     private readonly ReturnBehavior returnBehavior;
-    private List<ILocalSymbol>? cachedReturns;
-    private SemanticModel? cachedModel;
 
 
     public StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
     {
         this.selectedStatements = selectedStatements;
         this.containingBlock = containingBlock;
-        this.returnBehavior = new ReturnBehavior(selectedStatements);
-    }
-
-    public virtual SyntaxNode GetSelectedNode()
-    {
-        return selectedStatements.First();
+        returnBehavior = new ReturnBehavior(selectedStatements);
     }
 
     public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
@@ -75,12 +68,12 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override BlockSyntax CreateMethodBody()
     {
-        if (cachedReturns == null || cachedModel == null)
-        {
-            return SyntaxFactory.Block(selectedStatements);
-        }
+        return SyntaxFactory.Block(selectedStatements);
+    }
 
-        if (cachedReturns.Count == 0)
+    public BlockSyntax CreateMethodBody(SemanticModel model, List<ILocalSymbol> returns)
+    {
+        if (returns.Count == 0)
         {
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
             if (selectedStatements.Count == 1 &&
@@ -96,7 +89,7 @@ public class StatementExtractionTarget : ExtractionTarget
             return newMethodBody;
         }
 
-        if (cachedReturns.FirstOrDefault() is { } returnSymbol)
+        if (returns.FirstOrDefault() is { } returnSymbol)
         {
             return SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
         }
@@ -106,8 +99,6 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
     {
-        cachedReturns = returns;
-        cachedModel = model;
         var callStatement = StatementSyntax(methodCall, returns);
 
         editor.ReplaceNode(selectedStatements.First(), callStatement);

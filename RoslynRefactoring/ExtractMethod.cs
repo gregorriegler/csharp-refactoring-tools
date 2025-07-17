@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Text;
-using static RoslynRefactoring.MethodSignature;
 
 namespace RoslynRefactoring;
 
@@ -61,7 +60,9 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        var methodBody = extractionTarget.CreateMethodBody();
+        var methodBody = extractionTarget is StatementExtractionTarget statementTarget
+            ? statementTarget.CreateMethodBody(model, returns)
+            : extractionTarget.CreateMethodBody();
         var methodSignature = MethodSignature.Create(methodBody, returnType);
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
