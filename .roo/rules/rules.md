@@ -2,11 +2,12 @@
 ALWAYS start your answers with a STARTING_CHARACTER
 The default STARTING_CHARACTER is 🐙
 
-Whenever you need to stop, you cannot continue, or you have a question for me, notify me using the `say.py` script using `./say.py "<your message>"
+Whenever you need to stop, continue, or have a question for me, notify me using the `say.py` script using `./say.py "<your message>"
 
-I prefer SHORT, SUCCINCT and CONCISE answers
+I prefer SHORT and SUCCINCT answers
 
-Don't be overly optimistic, but be critical and skeptical. 
+Don't be optimistic, but be critical and skeptical.
+Hypothesize first and prove your hypothesis before taking action. 
 
 # Coding Rules
 - NEVER ADD COMMENTS
@@ -29,5 +30,5 @@ Don't be overly optimistic, but be critical and skeptical.
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
-- NEVER use Loops or .Where() in a Test. The test knows the expected outcome and references list contents directly or uses prebuilt Collection Asserts.
-- Don't do Assert.Multiple. Each Assert stands on its own on its own line.
+- NEVER use a block syntax structure such as Loops or .Where() in a Test. The test has only one path and it knows the expected outcome. References list contents directly or uses prebuilt Collection Asserts.
+- Don't use Assert.Multiple. Each Assert stands on its own on its own line.
