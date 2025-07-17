@@ -14,7 +14,7 @@ namespace RoslynRefactoring
             this.selectedExpression = selectedExpression;
         }
 
-        public override SyntaxNode GetSelectedNode()
+        public virtual SyntaxNode GetSelectedNode()
         {
             return selectedExpression;
         }
@@ -58,7 +58,7 @@ namespace RoslynRefactoring
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-        public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
+        public override BlockSyntax CreateMethodBody()
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);

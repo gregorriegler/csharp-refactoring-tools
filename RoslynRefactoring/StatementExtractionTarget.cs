@@ -20,7 +20,7 @@ namespace RoslynRefactoring
             this.returnBehavior = new ReturnBehavior(selectedStatements);
         }
 
-        public override SyntaxNode GetSelectedNode()
+        public virtual SyntaxNode GetSelectedNode()
         {
             return selectedStatements.First();
         }
@@ -58,7 +58,7 @@ namespace RoslynRefactoring
             throw new InvalidOperationException("Unsupported return symbol type.");
         }
 
-        public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
+        public override BlockSyntax CreateMethodBody()
         {
             return SyntaxFactory.Block(selectedStatements);
         }

@@ -46,7 +46,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
 
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        var newMethodBody = extractionTarget.CreateMethodBody(dataFlow);
+        var newMethodBody = extractionTarget.CreateMethodBody();
 
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()

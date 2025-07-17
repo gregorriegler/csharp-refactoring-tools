@@ -8,13 +8,11 @@ namespace RoslynRefactoring
 {
     public abstract class ExtractionTarget
     {
-        public abstract SyntaxNode GetSelectedNode();
-
         public abstract DataFlowAnalysis AnalyzeDataFlow(SemanticModel model);
 
         public abstract TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow);
 
-        public abstract BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow);
+        public abstract BlockSyntax CreateMethodBody();
 
         public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
 
