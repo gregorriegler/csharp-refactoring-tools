@@ -47,20 +47,18 @@ namespace RoslynRefactoring
                     .ToList();
             }
 
-            if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
+            if (selectedNode is not StatementSyntax singleStatement || !span.OverlapsWith(singleStatement.Span))
+                return selectedNode.DescendantNodesAndSelf()
+                    .OfType<StatementSyntax>()
+                    .Where(stmt => span.OverlapsWith(stmt.Span))
+                    .ToList();
+            if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
             {
-                if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
-                {
-                    return new List<StatementSyntax> { singleStatement };
-                }
-
-                return new List<StatementSyntax>();
+                return [singleStatement];
             }
 
-            return selectedNode.DescendantNodesAndSelf()
-                .OfType<StatementSyntax>()
-                .Where(stmt => span.OverlapsWith(stmt.Span))
-                .ToList();
+            return new List<StatementSyntax>();
+
         }
 
         private static ExpressionSyntax? FindExpressionInSelection(SyntaxNode selectedNode, TextSpan span)
