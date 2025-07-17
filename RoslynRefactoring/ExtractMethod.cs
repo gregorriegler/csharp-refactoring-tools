@@ -46,18 +46,17 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
 
 
+        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
+            .OfType<ILocalSymbol>()
+            .ToList();
+        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
+
         var methodCall = SyntaxFactory.InvocationExpression(
             SyntaxFactory.IdentifierName(newMethodName),
             SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
                 SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
-
-
-        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
-
-        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
         var replacementNode = extractionTarget.CreateReplacementNode(methodCall, model, returns);
+
         extractionTarget.ReplaceInEditor(editor, replacementNode);
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var methodBody = extractionTarget.CreateMethodBody(returns);
