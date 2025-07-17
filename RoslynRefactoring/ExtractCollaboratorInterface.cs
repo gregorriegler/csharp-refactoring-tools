@@ -11,11 +11,11 @@ namespace RoslynRefactoring;
 /// </summary>
 public class ExtractCollaboratorInterface : IRefactoring
 {
-    private readonly CodeSelection _selection;
+    private readonly CodeSelection selection;
 
     public ExtractCollaboratorInterface(CodeSelection selection)
     {
-        _selection = selection ?? throw new ArgumentNullException(nameof(selection));
+        this.selection = selection ?? throw new ArgumentNullException(nameof(selection));
     }
 
     public static ExtractCollaboratorInterface Create(string[] args)
@@ -84,8 +84,8 @@ public class ExtractCollaboratorInterface : IRefactoring
     private TypeSyntax? FindCollaboratorTypeAtSelection(SyntaxNode documentRoot)
     {
         var sourceText = documentRoot.GetText();
-        var startPosition = sourceText.Lines[_selection.Start.Line - 1].Start + _selection.Start.Column;
-        var endPosition = sourceText.Lines[_selection.End.Line - 1].Start + _selection.End.Column;
+        var startPosition = sourceText.Lines[selection.Start.Line - 1].Start + selection.Start.Column;
+        var endPosition = sourceText.Lines[selection.End.Line - 1].Start + selection.End.Column;
         var selectionSpan = TextSpan.FromBounds(startPosition, endPosition);
 
         var nodeAtSelection = documentRoot.FindNode(selectionSpan);
@@ -316,20 +316,20 @@ public class ExtractCollaboratorInterface : IRefactoring
 
     private class CollaboratorRewriter : CSharpSyntaxRewriter
     {
-        private readonly string _collaboratorType;
-        private readonly string _fieldName;
+        private readonly string collaboratorType;
+        private readonly string fieldName;
 
         public CollaboratorRewriter(string collaboratorType, string fieldName)
         {
-            _collaboratorType = collaboratorType;
-            _fieldName = fieldName;
+            this.collaboratorType = collaboratorType;
+            this.fieldName = fieldName;
         }
 
         public override SyntaxNode? VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
-            if (node.Declaration.Type.ToString() == _collaboratorType)
+            if (node.Declaration.Type.ToString() == collaboratorType)
             {
-                var interfaceName = GetInterfaceName(_collaboratorType);
+                var interfaceName = GetInterfaceName(collaboratorType);
                 return node.WithDeclaration(
                     node.Declaration.WithType(SyntaxFactory.IdentifierName(interfaceName)));
             }
@@ -339,9 +339,9 @@ public class ExtractCollaboratorInterface : IRefactoring
 
         public override SyntaxNode? VisitParameter(ParameterSyntax node)
         {
-            if (node.Type?.ToString() == _collaboratorType)
+            if (node.Type?.ToString() == collaboratorType)
             {
-                var interfaceName = GetInterfaceName(_collaboratorType);
+                var interfaceName = GetInterfaceName(collaboratorType);
                 return node.WithType(SyntaxFactory.IdentifierName(interfaceName));
             }
 
@@ -350,9 +350,9 @@ public class ExtractCollaboratorInterface : IRefactoring
 
         public override SyntaxNode? VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
-            if (node.Type.ToString() == _collaboratorType)
+            if (node.Type.ToString() == collaboratorType)
             {
-                var interfaceName = GetInterfaceName(_collaboratorType);
+                var interfaceName = GetInterfaceName(collaboratorType);
                 return node.WithType(SyntaxFactory.IdentifierName(interfaceName));
             }
 

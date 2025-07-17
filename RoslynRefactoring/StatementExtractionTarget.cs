@@ -71,23 +71,31 @@ public class StatementExtractionTarget : ExtractionTarget
             if (returnBehavior.RequiresReturnStatement)
             {
                 callStatement = SyntaxFactory.ReturnStatement(methodCall);
-            }
-            else if (returns.Count == 0)
-            {
-                callStatement = HandleNoReturnsCase(methodCall, model, newMethodBody);
-            }
-            else if (returns.FirstOrDefault() is { } localReturnSymbol)
-            {
-                callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, newMethodBody);
-            }
-            else
-            {
-                throw new InvalidOperationException("Unsupported return symbol type.");
+                editor.ReplaceNode(selectedStatements.First(), callStatement);
+                foreach (var stmt in selectedStatements.Skip(1))
+                    editor.RemoveNode(stmt);
+                return;
             }
 
-            editor.ReplaceNode(selectedStatements.First(), callStatement);
-            foreach (var stmt in selectedStatements.Skip(1))
-                editor.RemoveNode(stmt);
+            if (returns.Count == 0)
+            {
+                callStatement = HandleNoReturnsCase(methodCall, model, newMethodBody);
+                editor.ReplaceNode(selectedStatements.First(), callStatement);
+                foreach (var stmt in selectedStatements.Skip(1))
+                    editor.RemoveNode(stmt);
+                return;
+            }
+
+            if (returns.FirstOrDefault() is { } localReturnSymbol)
+            {
+                callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, newMethodBody);
+                editor.ReplaceNode(selectedStatements.First(), callStatement);
+                foreach (var stmt in selectedStatements.Skip(1))
+                    editor.RemoveNode(stmt);
+                return;
+            }
+
+            throw new InvalidOperationException("Unsupported return symbol type.");
         }
 
         private StatementSyntax HandleNoReturnsCase(InvocationExpressionSyntax methodCall, SemanticModel model, BlockSyntax newMethodBody)

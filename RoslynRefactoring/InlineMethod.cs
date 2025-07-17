@@ -48,38 +48,25 @@ public class InlineMethod(Cursor cursor) : IRefactoring
 
     private async Task<(SyntaxNode root, SemanticModel semanticModel, InvocationExpressionSyntax invocation, IMethodSymbol methodSymbol, MethodDeclarationSyntax methodDeclaration, BlockSyntax methodBody)?> ValidateInvocationContext(Document document)
     {
-        (SyntaxNode? root, SemanticModel? semanticModel) ret;
         var root1 = await document.GetSyntaxRootAsync();
         if (root1 == null)
-        {
-            ret = (null, null);
-        }
-        else
-        {
-            var semanticModel1 = await document.GetSemanticModelAsync();
-            if (semanticModel1 == null)
-            {
-                ret = (null, null);
-            }
-            else
-            {
-                ret = (root: root1, semanticModel: semanticModel1);
-            }
-        }
-
-        var (root, semanticModel) = ret;
-        if (root == null || semanticModel == null)
         {
             return null;
         }
 
-        var invocation = FindInvocationAtCursor(root, cursor);
+        var semanticModel1 = await document.GetSemanticModelAsync();
+        if (semanticModel1 == null)
+        {
+            return null;
+        }
+
+        var invocation = FindInvocationAtCursor(root1, cursor);
         if (invocation == null)
         {
             return null;
         }
 
-        var methodSymbol = ValidateAndGetMethodSymbol(semanticModel, invocation);
+        var methodSymbol = ValidateAndGetMethodSymbol(semanticModel1, invocation);
         if (methodSymbol == null)
         {
             return null;
@@ -91,7 +78,7 @@ public class InlineMethod(Cursor cursor) : IRefactoring
             return null;
         }
 
-        return (root, semanticModel, invocation, methodSymbol, methodDeclaration, methodBody);
+        return (root1, semanticModel1, invocation, methodSymbol, methodDeclaration, methodBody);
     }
 
     private SyntaxNode ProcessAllInvocations(SyntaxNode root, SemanticModel semanticModel, IMethodSymbol methodSymbol, MethodDeclarationSyntax methodDeclaration, BlockSyntax methodBody)
@@ -297,14 +284,13 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         {
             var inlinedStatement = ReplaceParametersInStatement(statement, parameterMap);
 
-            if (inlinedStatement is ReturnStatementSyntax returnStatement)
+            if (inlinedStatement is ReturnStatementSyntax returnStatement && returnStatement.Expression != null)
             {
-                if (returnStatement.Expression != null)
-                {
-                    inlinedStatements.Add(inlinedStatement);
-                }
+                inlinedStatements.Add(inlinedStatement);
+                continue;
             }
-            else
+
+            if (inlinedStatement is not ReturnStatementSyntax)
             {
                 inlinedStatements.Add(inlinedStatement);
             }

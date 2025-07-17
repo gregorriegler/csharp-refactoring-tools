@@ -20,11 +20,11 @@ public class SelectionException : Exception
 /// </summary>
 public class BreakHardDependency : IRefactoring
 {
-    private readonly CodeSelection _selection;
+    private readonly CodeSelection selection;
 
     public BreakHardDependency(CodeSelection selection)
     {
-        _selection = selection ?? throw new ArgumentNullException(nameof(selection));
+        this.selection = selection ?? throw new ArgumentNullException(nameof(selection));
     }
 
     public static BreakHardDependency Create(string[] args)
@@ -98,7 +98,7 @@ public class BreakHardDependency : IRefactoring
             var text = await document.GetTextAsync();
             var lines = text.Lines;
 
-            if (!_selection.IsInRange(lines))
+            if (!selection.IsInRange(lines))
             {
                 throw new SelectionException("Selection out of range");
             }
@@ -147,10 +147,10 @@ public class BreakHardDependency : IRefactoring
 
     private (int startPos, int endPos) CreateSelectionSpan(TextLineCollection lines)
     {
-        var startPos = lines[_selection.Start.Line - 1].Start +
-            Math.Min(_selection.Start.Column - 1, lines[_selection.Start.Line - 1].End - lines[_selection.Start.Line - 1].Start);
-        var endPos = lines[_selection.End.Line - 1].Start +
-            Math.Min(_selection.End.Column - 1, lines[_selection.End.Line - 1].End - lines[_selection.End.Line - 1].Start);
+        var startPos = lines[selection.Start.Line - 1].Start +
+            Math.Min(selection.Start.Column - 1, lines[selection.Start.Line - 1].End - lines[selection.Start.Line - 1].Start);
+        var endPos = lines[selection.End.Line - 1].Start +
+            Math.Min(selection.End.Column - 1, lines[selection.End.Line - 1].End - lines[selection.End.Line - 1].Start);
 
         return (startPos, endPos);
     }
@@ -254,20 +254,20 @@ public class BreakHardDependency : IRefactoring
                 {
                     var modifiedField = ConvertToReadonlyField(fieldDeclaration);
                     result.ModifiedFields.Add(modifiedField);
+                    continue;
                 }
-                else
-                {
-                    result.ModifiedFields.Add(fieldDeclaration);
-                }
+
+                result.ModifiedFields.Add(fieldDeclaration);
+                continue;
             }
-            else if (member is ConstructorDeclarationSyntax constructor)
+
+            if (member is ConstructorDeclarationSyntax constructor)
             {
                 result.Constructors.Add(constructor);
+                continue;
             }
-            else
-            {
-                result.OtherMembers.Add(member);
-            }
+
+            result.OtherMembers.Add(member);
         }
 
         return result;
