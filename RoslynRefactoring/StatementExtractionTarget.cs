@@ -71,30 +71,26 @@ public class StatementExtractionTarget : ExtractionTarget
         return SyntaxFactory.Block(selectedStatements);
     }
 
-    public BlockSyntax CreateMethodBody(SemanticModel model, List<ILocalSymbol> returns)
+    public BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
     {
-        if (returns.Count == 0)
+        if (returns.Count != 0)
         {
-            var newMethodBody = SyntaxFactory.Block(selectedStatements);
-            if (selectedStatements.Count == 1 &&
-                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
-            {
-                var variable = localDecl.Declaration.Variables.FirstOrDefault();
-                if (variable != null)
-                {
-                    return newMethodBody.AddStatements(
-                        SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
-                }
-            }
-            return newMethodBody;
+            return returns.FirstOrDefault() is { } returnSymbol
+                ? SyntaxFactory.Block(selectedStatements)
+                    .AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)))
+                : SyntaxFactory.Block(selectedStatements);
         }
 
-        if (returns.FirstOrDefault() is { } returnSymbol)
+        var newMethodBody = SyntaxFactory.Block(selectedStatements);
+        if (selectedStatements.Count != 1 ||
+            selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl) return newMethodBody;
+        var variable = localDecl.Declaration.Variables.FirstOrDefault();
+        if (variable != null)
         {
-            return SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
+            return newMethodBody.AddStatements(
+                SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
         }
-
-        return SyntaxFactory.Block(selectedStatements);
+        return newMethodBody;
     }
 
     public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)

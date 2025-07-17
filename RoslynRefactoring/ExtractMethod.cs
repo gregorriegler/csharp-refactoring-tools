@@ -61,7 +61,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var methodBody = extractionTarget is StatementExtractionTarget statementTarget
-            ? statementTarget.CreateMethodBody(model, returns)
+            ? statementTarget.CreateMethodBody(returns)
             : extractionTarget.CreateMethodBody();
         var methodSignature = MethodSignature.Create(methodBody, returnType);
 
