@@ -19,7 +19,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         return dataFlow;
     }
 
-    public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
+    public override TypeSyntax DetermineReturnType(SemanticModel model)
     {
         if (returnBehavior.RequiresReturnStatement)
         {
@@ -28,6 +28,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
+        var dataFlow = AnalyzeDataFlow(model);
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
             .ToList();
@@ -54,8 +55,9 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
-    public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
+    public override BlockSyntax CreateMethodBody(SemanticModel model)
     {
+        var dataFlow = AnalyzeDataFlow(model);
         var returns = GetReturns(dataFlow);
         if (returns.Count != 0)
         {
@@ -77,15 +79,16 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         return newMethodBody;
     }
 
-    public override SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow)
+    public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
     {
-        var methodCall = CreateMethodCall(methodName, GetParameters(dataFlow));
+
+        var methodCall = CreateMethodCall(methodName, GetParameters(AnalyzeDataFlow(model)));
         if (returnBehavior.RequiresReturnStatement)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
-        var returns = GetReturns(dataFlow);
+        var returns = GetReturns(AnalyzeDataFlow(model));
         if (returns.Count == 0)
         {
             return GetCallStatement(methodCall);

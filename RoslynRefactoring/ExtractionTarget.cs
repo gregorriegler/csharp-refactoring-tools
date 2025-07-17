@@ -10,11 +10,11 @@ public abstract class ExtractionTarget
     {
         public abstract DataFlowAnalysis AnalyzeDataFlow(SemanticModel model);
 
-        public abstract TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow);
+        public abstract TypeSyntax DetermineReturnType(SemanticModel model);
 
-        public abstract BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow);
+        public abstract BlockSyntax CreateMethodBody(SemanticModel model);
 
-        public abstract SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow);
+        public abstract SyntaxNode CreateReplacementNode(string methodName, SemanticModel model);
 
         public abstract void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode);
 

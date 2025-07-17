@@ -38,7 +38,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
         var dataFlow = extractionTarget.AnalyzeDataFlow(model);
-        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, dataFlow);
+        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, model);
         extractionTarget.ReplaceInEditor(editor, replacementNode);
         var methodDeclaration = CreateMethodDeclaration(extractionTarget, dataFlow, model);
         var insertionPoint = extractionTarget.GetInsertionPoint();
@@ -52,8 +52,8 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
     private MethodDeclarationSyntax CreateMethodDeclaration(ExtractionTarget extractionTarget, DataFlowAnalysis dataFlow,
         SemanticModel model)
     {
-        var methodBody = extractionTarget.CreateMethodBody(dataFlow);
-        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
+        var methodBody = extractionTarget.CreateMethodBody(model);
+        var returnType = extractionTarget.DetermineReturnType(model);
         var parameters = ExtractionTarget.GetParameters(dataFlow);
         var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
         return methodDeclaration;

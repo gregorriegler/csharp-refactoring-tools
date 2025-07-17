@@ -15,7 +15,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
             return dataFlow;
         }
 
-        public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
+        public override TypeSyntax DetermineReturnType(SemanticModel model)
         {
             var typeInfo = model.GetTypeInfo(selectedExpression);
             var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
@@ -43,15 +43,16 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
                 : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-        public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
+        public override BlockSyntax CreateMethodBody(SemanticModel model)
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override SyntaxNode CreateReplacementNode(string methodName, DataFlowAnalysis dataFlow)
+        public override SyntaxNode CreateReplacementNode(string methodName,
+            SemanticModel model)
         {
-            return CreateMethodCall(methodName, GetParameters(dataFlow));
+            return CreateMethodCall(methodName, GetParameters(AnalyzeDataFlow(model)));
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
