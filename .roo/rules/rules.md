@@ -29,6 +29,7 @@ Hypothesize first and prove your hypothesis before taking action.
 - No out/ref variables 
 - Use curly braces for single line ifs
 - Avoid else if possible
+- When a function uses only a derived, or a small percentage of properties of a passed object, pass the specific elements instead.
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
