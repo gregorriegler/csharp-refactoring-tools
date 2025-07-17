@@ -14,7 +14,9 @@ public abstract class ExtractionTarget
 
         public abstract BlockSyntax CreateMethodBody(List<ILocalSymbol> returns);
 
-        public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
+        public abstract SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
+
+        public abstract void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode);
 
         public abstract SyntaxNode GetInsertionPoint();
 

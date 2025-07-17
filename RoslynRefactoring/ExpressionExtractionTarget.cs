@@ -64,9 +64,14 @@ public class ExpressionExtractionTarget : ExtractionTarget
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+        public override SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
         {
-            editor.ReplaceNode(selectedExpression, methodCall);
+            return methodCall;
+        }
+
+        public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
+        {
+            editor.ReplaceNode(selectedExpression, replacementNode);
         }
 
         public override SyntaxNode GetInsertionPoint()

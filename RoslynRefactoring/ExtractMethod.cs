@@ -57,16 +57,16 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
             .ToList();
-        extractionTarget.ReplaceInEditor(editor, methodCall, model, returns);
+        var replacementNode = extractionTarget.CreateReplacementNode(methodCall, model, returns);
+        extractionTarget.ReplaceInEditor(editor, replacementNode);
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var methodBody = extractionTarget.CreateMethodBody(returns);
-        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
 
         var insertionPoint = extractionTarget.GetInsertionPoint();
+        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
         editor.InsertAfter(insertionPoint, methodDeclaration);
 
         var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
-
         Console.WriteLine($"✅ Extracted method '{newMethodName}'");
         return document.WithSyntaxRoot(newRoot);
     }

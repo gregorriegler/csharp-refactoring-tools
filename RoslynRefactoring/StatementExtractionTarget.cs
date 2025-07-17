@@ -88,17 +88,7 @@ public class StatementExtractionTarget : ExtractionTarget
         return newMethodBody;
     }
 
-    public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
-    {
-        var callStatement = StatementSyntax(methodCall, returns);
-
-        editor.ReplaceNode(selectedStatements.First(), callStatement);
-        foreach (var stmt in selectedStatements.Skip(1))
-            editor.RemoveNode(stmt);
-    }
-
-
-    private StatementSyntax StatementSyntax(InvocationExpressionSyntax methodCall, List<ILocalSymbol> returns)
+    public override SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
     {
         if (returnBehavior.RequiresReturnStatement)
         {
@@ -114,6 +104,14 @@ public class StatementExtractionTarget : ExtractionTarget
         }
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
+
+    public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
+    {
+        editor.ReplaceNode(selectedStatements.First(), replacementNode);
+        foreach (var stmt in selectedStatements.Skip(1))
+            editor.RemoveNode(stmt);
+    }
+
 
     private StatementSyntax GetCallStatement(InvocationExpressionSyntax methodCall)
     {
