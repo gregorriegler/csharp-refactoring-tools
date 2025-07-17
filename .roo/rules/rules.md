@@ -24,6 +24,7 @@ Hypothesize first and prove your hypothesis before taking action.
 
 ## Tidy
 - NO COMMENTS
+- As we read from top to bottom, called functions should be below their calling functions
 - private fields start with a lower case letter, not with underscores
 - Use curly braces for single line ifs
 - Avoid else if possible

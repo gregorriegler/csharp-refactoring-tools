@@ -8,6 +8,8 @@ Favor polymorphism over repeated conditions.
 Favor value objects over tuples and other primitive data structures.
 Favor tell don't ask over properties.
 Avoid interfaces for stable dependencies.
+Move called functions below their calling functions
+
 
 To increase Cohesion:
 - Move variable declarations as close as possible to where they are used
