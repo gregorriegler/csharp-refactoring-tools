@@ -71,71 +71,11 @@ namespace RoslynRefactoring
         /// <returns>An ExtractionTarget instance (either ExpressionExtractionTarget or StatementExtractionTarget)</returns>
         public static ExtractionTarget CreateFromSelection(SyntaxNode selectedNode, TextSpan span, BlockSyntax block)
         {
-            var selectedStatements = new List<StatementSyntax>();
-            ExpressionSyntax? selectedExpression = null;
+            var selectedStatements = FindStatementsInSelection(selectedNode, span);
 
-            if (selectedNode is BlockSyntax blockNode)
-            {
-                selectedStatements = blockNode.Statements
-                    .Where(stmt => span.OverlapsWith(stmt.Span))
-                    .ToList();
-            }
-            else if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
-            {
-                // Only treat as statement extraction if the span covers the entire statement
-                // If it's a partial selection, look for expressions instead
-                if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
-                {
-                    selectedStatements.Add(singleStatement);
-                }
-            }
-            else
-            {
-                selectedStatements = selectedNode.DescendantNodesAndSelf()
-                    .OfType<StatementSyntax>()
-                    .Where(stmt => span.OverlapsWith(stmt.Span))
-                    .ToList();
-            }
-
-            // If no statements found, check if we're selecting an expression
             if (selectedStatements.Count == 0)
             {
-                if (selectedNode is ExpressionSyntax expression)
-                {
-                    selectedExpression = expression;
-                }
-                else
-                {
-                    // Get all expressions in the selected node and its descendants
-                    var allExpressions = selectedNode.DescendantNodesAndSelf()
-                        .OfType<ExpressionSyntax>()
-                        .ToList();
-
-                    // Try to find an expression that best matches the selection span
-                    selectedExpression = allExpressions
-                        .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
-                        .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length)) // Prefer expressions closest to selection length
-                        .ThenBy(expr => expr.Span.Length) // Then prefer smaller expressions as tiebreaker
-                        .FirstOrDefault();
-
-                    // If still not found, try looking at ancestors for expressions that contain the span
-                    if (selectedExpression == null)
-                    {
-                        selectedExpression = selectedNode.AncestorsAndSelf()
-                            .OfType<ExpressionSyntax>()
-                            .Where(expr => expr.Span.Contains(span) || span.OverlapsWith(expr.Span))
-                            .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length)) // Prefer expressions closest to selection length
-                            .ThenBy(expr => expr.Span.Length) // Then prefer smaller expressions as tiebreaker
-                            .FirstOrDefault();
-                    }
-
-                    // Special case: if we have an EqualsValueClauseSyntax, look for the expression inside it
-                    if (selectedExpression == null && selectedNode is EqualsValueClauseSyntax equalsValue)
-                    {
-                        selectedExpression = equalsValue.Value;
-                    }
-                }
-
+                var selectedExpression = FindExpressionInSelection(selectedNode, span);
                 if (selectedExpression == null)
                     throw new InvalidOperationException("No statements or expressions selected for extraction.");
 
@@ -145,6 +85,78 @@ namespace RoslynRefactoring
             {
                 return new StatementExtractionTarget(selectedStatements, block);
             }
+        }
+
+        private static List<StatementSyntax> FindStatementsInSelection(SyntaxNode selectedNode, TextSpan span)
+        {
+            if (selectedNode is BlockSyntax blockNode)
+            {
+                return blockNode.Statements
+                    .Where(stmt => span.OverlapsWith(stmt.Span))
+                    .ToList();
+            }
+            else if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
+            {
+                if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
+                {
+                    return new List<StatementSyntax> { singleStatement };
+                }
+            }
+            else
+            {
+                return selectedNode.DescendantNodesAndSelf()
+                    .OfType<StatementSyntax>()
+                    .Where(stmt => span.OverlapsWith(stmt.Span))
+                    .ToList();
+            }
+
+            return new List<StatementSyntax>();
+        }
+
+        private static ExpressionSyntax? FindExpressionInSelection(SyntaxNode selectedNode, TextSpan span)
+        {
+            if (selectedNode is ExpressionSyntax expression)
+            {
+                return expression;
+            }
+
+            var selectedExpression = FindExpressionInDescendants(selectedNode, span);
+            if (selectedExpression != null)
+                return selectedExpression;
+
+            selectedExpression = FindExpressionInAncestors(selectedNode, span);
+            if (selectedExpression != null)
+                return selectedExpression;
+
+            if (selectedNode is EqualsValueClauseSyntax equalsValue)
+            {
+                return equalsValue.Value;
+            }
+
+            return null;
+        }
+
+        private static ExpressionSyntax? FindExpressionInDescendants(SyntaxNode selectedNode, TextSpan span)
+        {
+            var allExpressions = selectedNode.DescendantNodesAndSelf()
+                .OfType<ExpressionSyntax>()
+                .ToList();
+
+            return allExpressions
+                .Where(expr => span.OverlapsWith(expr.Span) || expr.Span.Contains(span))
+                .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length))
+                .ThenBy(expr => expr.Span.Length)
+                .FirstOrDefault();
+        }
+
+        private static ExpressionSyntax? FindExpressionInAncestors(SyntaxNode selectedNode, TextSpan span)
+        {
+            return selectedNode.AncestorsAndSelf()
+                .OfType<ExpressionSyntax>()
+                .Where(expr => expr.Span.Contains(span) || span.OverlapsWith(expr.Span))
+                .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length))
+                .ThenBy(expr => expr.Span.Length)
+                .FirstOrDefault();
         }
     }
     /// <summary>
