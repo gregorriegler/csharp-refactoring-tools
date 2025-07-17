@@ -45,7 +45,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
 
-        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var newMethodBody = extractionTarget.CreateMethodBody();
 
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
@@ -61,6 +60,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
+        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var methodSignature = extractionTarget.ApplyModifications(newMethodBody, returnType);
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
