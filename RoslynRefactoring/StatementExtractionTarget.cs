@@ -63,7 +63,7 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override BlockSyntax CreateMethodBody()
     {
-        return SyntaxFactory.Block(selectedStatements);
+        return ModifiedMethodBody ?? SyntaxFactory.Block(selectedStatements);
     }
 
     public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall,
@@ -115,13 +115,16 @@ public class StatementExtractionTarget : ExtractionTarget
         var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variableName));
         modifiedMethodBody = newMethodBody.AddStatements(returnStatement);
 
-        if (model != null && variable.Initializer?.Value != null)
+        if (variable.Initializer?.Value == null)
+            return SyntaxFactory.LocalDeclarationStatement(
+                SyntaxFactory.VariableDeclaration(variableType)
+                    .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                            .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+        var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+        if (typeInfo.Type != null)
         {
-            var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-            if (typeInfo.Type != null)
-            {
-                modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-            }
+            modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
         }
 
         return SyntaxFactory.LocalDeclarationStatement(

@@ -45,7 +45,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
 
-        var newMethodBody = extractionTarget.CreateMethodBody();
 
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
@@ -60,7 +59,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
-        var methodSignature = MethodSignature(extractionTarget, model, dataFlow, newMethodBody);
+        var methodSignature = MethodSignature(extractionTarget, model, dataFlow);
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
@@ -76,21 +75,15 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static MethodSignature MethodSignature(ExtractionTarget extractionTarget, SemanticModel model,
-        DataFlowAnalysis dataFlow, BlockSyntax newMethodBody)
+    private static MethodSignature MethodSignature(ExtractionTarget extractionTarget, SemanticModel model, DataFlowAnalysis dataFlow)
     {
-        var finalMethodBody = newMethodBody;
+        var finalReturnType = extractionTarget.DetermineReturnType(model, dataFlow);
         if (extractionTarget is StatementExtractionTarget statementTarget)
         {
-            finalMethodBody = statementTarget.ModifiedMethodBody ?? newMethodBody;
+            finalReturnType = statementTarget.ModifiedReturnType ?? extractionTarget.DetermineReturnType(model, dataFlow);
         }
 
-        var finalReturnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        if (extractionTarget is StatementExtractionTarget statementTarget2)
-        {
-            finalReturnType = statementTarget2.ModifiedReturnType ?? extractionTarget.DetermineReturnType(model, dataFlow);
-        }
-
+        var finalMethodBody = extractionTarget.CreateMethodBody();
         var methodSignature = RoslynRefactoring.MethodSignature.Create(finalMethodBody, finalReturnType);
         return methodSignature;
     }
