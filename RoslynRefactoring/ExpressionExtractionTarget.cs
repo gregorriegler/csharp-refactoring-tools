@@ -5,21 +5,9 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynRefactoring;
 
-public class ExpressionExtractionTarget : ExtractionTarget
-    {
-        private readonly ExpressionSyntax selectedExpression;
-
-        public ExpressionExtractionTarget(ExpressionSyntax selectedExpression)
-        {
-            this.selectedExpression = selectedExpression;
-        }
-
-        public virtual SyntaxNode GetSelectedNode()
-        {
-            return selectedExpression;
-        }
-
-        public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
+public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpression) : ExtractionTarget
+{
+    public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
         {
             var dataFlow = model?.AnalyzeDataFlow(selectedExpression);
             if (dataFlow == null)
@@ -50,12 +38,9 @@ public class ExpressionExtractionTarget : ExtractionTarget
                 return SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
             }
 
-            if (selectedExpression.ToString().StartsWith("Math.Max"))
-            {
-                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
-            }
-
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+            return SyntaxFactory.PredefinedType(selectedExpression.ToString().StartsWith("Math.Max")
+                ? SyntaxFactory.Token(SyntaxKind.IntKeyword)
+                : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
         public override BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
@@ -64,9 +49,9 @@ public class ExpressionExtractionTarget : ExtractionTarget
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+        public override SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns)
         {
-            return methodCall;
+            return CreateMethodCall(methodName, parameters);
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)

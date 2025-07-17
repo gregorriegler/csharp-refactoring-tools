@@ -14,7 +14,7 @@ public abstract class ExtractionTarget
 
         public abstract BlockSyntax CreateMethodBody(List<ILocalSymbol> returns);
 
-        public abstract SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
+        public abstract SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns);
 
         public abstract void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode);
 
@@ -110,5 +110,13 @@ public abstract class ExtractionTarget
                 .OrderBy(expr => Math.Abs(expr.Span.Length - span.Length))
                 .ThenBy(expr => expr.Span.Length)
                 .FirstOrDefault();
+        }
+
+        protected static InvocationExpressionSyntax CreateMethodCall(string methodName, List<ParameterSyntax> parameters)
+        {
+            return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.IdentifierName(methodName),
+                SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
+                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
         }
 }

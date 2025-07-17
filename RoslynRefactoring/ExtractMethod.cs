@@ -51,11 +51,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             .ToList();
         var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
 
-        var methodCall = SyntaxFactory.InvocationExpression(
-            SyntaxFactory.IdentifierName(newMethodName),
-            SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
-                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
-        var replacementNode = extractionTarget.CreateReplacementNode(methodCall, model, returns);
+        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, parameters, model, returns);
 
         extractionTarget.ReplaceInEditor(editor, replacementNode);
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);

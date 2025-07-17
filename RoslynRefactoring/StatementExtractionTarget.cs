@@ -5,19 +5,11 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynRefactoring;
 
-public class StatementExtractionTarget : ExtractionTarget
+public class StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
+    : ExtractionTarget
 {
-    private readonly List<StatementSyntax> selectedStatements;
-    private readonly BlockSyntax containingBlock;
-    private readonly ReturnBehavior returnBehavior;
+    private readonly ReturnBehavior returnBehavior = new(selectedStatements);
 
-
-    public StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
-    {
-        this.selectedStatements = selectedStatements;
-        this.containingBlock = containingBlock;
-        returnBehavior = new ReturnBehavior(selectedStatements);
-    }
 
     public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
     {
@@ -42,20 +34,16 @@ public class StatementExtractionTarget : ExtractionTarget
 
         if (returns.Count == 0)
         {
-            if (selectedStatements.Count == 1 &&
-                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
-            {
-                var variable = localDecl.Declaration.Variables.FirstOrDefault();
-                if (variable?.Initializer?.Value != null)
-                {
-                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null)
-                    {
-                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                    }
-                }
-            }
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            if (selectedStatements.Count != 1 ||
+                selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
+                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            var variable = localDecl.Declaration.Variables.FirstOrDefault();
+            if (variable?.Initializer?.Value == null)
+                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+            return typeInfo.Type != null
+                ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
+                : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
         if (returns.FirstOrDefault() is { } localReturnSymbol)
@@ -88,8 +76,9 @@ public class StatementExtractionTarget : ExtractionTarget
         return newMethodBody;
     }
 
-    public override SyntaxNode CreateReplacementNode(InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+    public override SyntaxNode CreateReplacementNode(string methodName, List<ParameterSyntax> parameters, SemanticModel model, List<ILocalSymbol> returns)
     {
+        var methodCall = CreateMethodCall(methodName, parameters);
         if (returnBehavior.RequiresReturnStatement)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
@@ -160,5 +149,4 @@ public class StatementExtractionTarget : ExtractionTarget
 
         return selectedStatements.Last();
     }
-
 }
