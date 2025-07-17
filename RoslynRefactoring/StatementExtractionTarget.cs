@@ -82,7 +82,8 @@ public class StatementExtractionTarget : ExtractionTarget
         }
         else if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
-            callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, SyntaxFactory.Block(selectedStatements));
+            modifiedMethodBody = SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name)));
+            callStatement = CreateLocalReturnStatement(methodCall, localReturnSymbol);
         }
         else
         {
@@ -132,11 +133,8 @@ public class StatementExtractionTarget : ExtractionTarget
                         .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
     }
 
-    private StatementSyntax HandleLocalReturnCase(InvocationExpressionSyntax methodCall, ILocalSymbol localReturnSymbol,
-        BlockSyntax newMethodBody)
+    private StatementSyntax CreateLocalReturnStatement(InvocationExpressionSyntax methodCall, ILocalSymbol localReturnSymbol)
     {
-        modifiedMethodBody = newMethodBody.AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name)));
-
         if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
