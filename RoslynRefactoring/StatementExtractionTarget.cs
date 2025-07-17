@@ -70,7 +70,6 @@ public class StatementExtractionTarget : ExtractionTarget
     public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall,
         SemanticModel model, List<ILocalSymbol> returns)
     {
-        var newMethodBody = SyntaxFactory.Block(selectedStatements);
         StatementSyntax callStatement;
 
         if (returnBehavior.RequiresReturnStatement)
@@ -79,11 +78,11 @@ public class StatementExtractionTarget : ExtractionTarget
         }
         else if (returns.Count == 0)
         {
-            callStatement = HandleNoReturnsCase(methodCall, model, newMethodBody);
+            callStatement = HandleNoReturnsCase(methodCall, model, SyntaxFactory.Block(selectedStatements));
         }
         else if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
-            callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, newMethodBody);
+            callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, SyntaxFactory.Block(selectedStatements));
         }
         else
         {
@@ -110,17 +109,15 @@ public class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ExpressionStatement(methodCall);
         }
 
-        var variableName = variable.Identifier.Text;
         var variableType = localDecl.Declaration.Type;
 
-        var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variableName));
-        modifiedMethodBody = newMethodBody.AddStatements(returnStatement);
+        modifiedMethodBody = newMethodBody.AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
 
         if (variable.Initializer?.Value == null)
             return SyntaxFactory.LocalDeclarationStatement(
                 SyntaxFactory.VariableDeclaration(variableType)
                     .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
                             .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
         var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
         if (typeInfo.Type != null)
@@ -131,17 +128,14 @@ public class StatementExtractionTarget : ExtractionTarget
         return SyntaxFactory.LocalDeclarationStatement(
             SyntaxFactory.VariableDeclaration(variableType)
                 .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
                         .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
     }
 
     private StatementSyntax HandleLocalReturnCase(InvocationExpressionSyntax methodCall, ILocalSymbol localReturnSymbol,
         BlockSyntax newMethodBody)
     {
-        var returnType = SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
-        var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name));
-
-        modifiedMethodBody = newMethodBody.AddStatements(returnStatement);
+        modifiedMethodBody = newMethodBody.AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name)));
 
         if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
         {
@@ -149,7 +143,7 @@ public class StatementExtractionTarget : ExtractionTarget
         }
 
         return SyntaxFactory.LocalDeclarationStatement(
-            SyntaxFactory.VariableDeclaration(returnType)
+            SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString()))
                 .WithVariables(SyntaxFactory.SingletonSeparatedList(
                     SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(localReturnSymbol.Name))
                         .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
