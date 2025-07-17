@@ -31,6 +31,7 @@ Hypothesize first and prove your hypothesis before taking action.
 - Avoid else if possible
 - When a function uses only a derived, or a small percentage of properties of a passed object, pass the specific elements instead.
 - Each class goes into its own file, unless its only used by the other class in the file and it both fits into 100 lines
+- Only ever use file-scoped namespaces
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
