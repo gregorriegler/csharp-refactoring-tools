@@ -33,10 +33,11 @@ Hypothesize first and prove your hypothesis before taking action.
 - Each class goes into its own file, unless its only used by the other class in the file and it both fits into 100 lines
 - declare a variable as late as possible and as close as possible to where it is used
 
-## All Code
+## Design rules
 - NO TryXy patterns
 - No out/ref variables 
 - When a function uses only a derived, or a small percentage of properties of a passed object, pass the specific elements instead.
+- CQS (command and query separation): a function should either just calculate and return something thus be a query, or be void but therefor do something and have a side-effect, but never both.
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
