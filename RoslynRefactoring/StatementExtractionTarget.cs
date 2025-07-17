@@ -66,12 +66,7 @@ public class StatementExtractionTarget : ExtractionTarget
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
-    public override BlockSyntax CreateMethodBody()
-    {
-        return SyntaxFactory.Block(selectedStatements);
-    }
-
-    public BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
+    public override BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
     {
         if (returns.Count != 0)
         {

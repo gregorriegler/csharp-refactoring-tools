@@ -58,7 +58,7 @@ public class ExpressionExtractionTarget : ExtractionTarget
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-        public override BlockSyntax CreateMethodBody()
+        public override BlockSyntax CreateMethodBody(List<ILocalSymbol> returns)
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);

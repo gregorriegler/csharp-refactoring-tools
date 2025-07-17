@@ -12,7 +12,7 @@ public abstract class ExtractionTarget
 
         public abstract TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow);
 
-        public abstract BlockSyntax CreateMethodBody();
+        public abstract BlockSyntax CreateMethodBody(List<ILocalSymbol> returns);
 
         public abstract void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns);
 

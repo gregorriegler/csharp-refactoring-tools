@@ -60,9 +60,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        var methodBody = extractionTarget is StatementExtractionTarget statementTarget
-            ? statementTarget.CreateMethodBody(returns)
-            : extractionTarget.CreateMethodBody();
+        var methodBody = extractionTarget.CreateMethodBody(returns);
         var methodSignature = MethodSignature.Create(methodBody, returnType);
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
