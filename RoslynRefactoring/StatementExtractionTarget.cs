@@ -10,11 +10,9 @@ public class StatementExtractionTarget : ExtractionTarget
     private readonly List<StatementSyntax> selectedStatements;
     private readonly BlockSyntax containingBlock;
     private readonly ReturnBehavior returnBehavior;
-    private BlockSyntax? modifiedMethodBody;
-    private TypeSyntax? modifiedReturnType;
+    private List<ILocalSymbol>? cachedReturns;
+    private SemanticModel? cachedModel;
 
-    public BlockSyntax? ModifiedMethodBody => modifiedMethodBody;
-    public TypeSyntax? ModifiedReturnType => modifiedReturnType;
 
     public StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
     {
@@ -38,7 +36,6 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
     {
-        if (modifiedReturnType != null) return modifiedReturnType;
         if (returnBehavior.RequiresReturnStatement)
         {
             var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
@@ -49,8 +46,22 @@ public class StatementExtractionTarget : ExtractionTarget
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
             .ToList();
+
         if (returns.Count == 0)
         {
+            if (selectedStatements.Count == 1 &&
+                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
+            {
+                var variable = localDecl.Declaration.Variables.FirstOrDefault();
+                if (variable?.Initializer?.Value != null)
+                {
+                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null)
+                    {
+                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                    }
+                }
+            }
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
@@ -64,43 +75,12 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override BlockSyntax CreateMethodBody()
     {
-        return ModifiedMethodBody ?? SyntaxFactory.Block(selectedStatements);
-    }
-
-    public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
-    {
-        ModifyMethodBody(returns);
-        ModifyReturnType(model, returns);
-        var callStatement = StatementSyntax(methodCall, returns);
-
-        editor.ReplaceNode(selectedStatements.First(), callStatement);
-        foreach (var stmt in selectedStatements.Skip(1))
-            editor.RemoveNode(stmt);
-    }
-
-    private void ModifyReturnType(SemanticModel model, List<ILocalSymbol> returns)
-    {
-        if (returns.Count == 0)
+        if (cachedReturns == null || cachedModel == null)
         {
-            if (selectedStatements.Count == 1 &&
-                selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
-            {
-                var variable = localDecl.Declaration.Variables.FirstOrDefault();
-                if (variable?.Initializer?.Value != null)
-                {
-                    var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null)
-                    {
-                        modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                    }
-                }
-            }
+            return SyntaxFactory.Block(selectedStatements);
         }
-    }
 
-    private void ModifyMethodBody(List<ILocalSymbol> returns)
-    {
-        if (returns.Count == 0)
+        if (cachedReturns.Count == 0)
         {
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
             if (selectedStatements.Count == 1 &&
@@ -109,17 +89,32 @@ public class StatementExtractionTarget : ExtractionTarget
                 var variable = localDecl.Declaration.Variables.FirstOrDefault();
                 if (variable != null)
                 {
-                    modifiedMethodBody = newMethodBody.AddStatements(
+                    return newMethodBody.AddStatements(
                         SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
                 }
             }
+            return newMethodBody;
         }
 
-        if (returns.FirstOrDefault() is { } returnSymbol)
+        if (cachedReturns.FirstOrDefault() is { } returnSymbol)
         {
-            modifiedMethodBody = SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
+            return SyntaxFactory.Block(selectedStatements).AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)));
         }
+
+        return SyntaxFactory.Block(selectedStatements);
     }
+
+    public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, List<ILocalSymbol> returns)
+    {
+        cachedReturns = returns;
+        cachedModel = model;
+        var callStatement = StatementSyntax(methodCall, returns);
+
+        editor.ReplaceNode(selectedStatements.First(), callStatement);
+        foreach (var stmt in selectedStatements.Skip(1))
+            editor.RemoveNode(stmt);
+    }
+
 
     private StatementSyntax StatementSyntax(InvocationExpressionSyntax methodCall, List<ILocalSymbol> returns)
     {
