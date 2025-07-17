@@ -9,6 +9,9 @@ Favor value objects over tuples and other primitive data structures.
 Favor tell don't ask over properties.
 Avoid interfaces for stable dependencies.
 
+To increase Cohesion:
+- Move variable declarations as close as possible to where they are used
+
 To Reduce Coupling:
 - Avoid booleans as arguments.
 - Avoid redundant parameters and making callers provide information the method can derive itself.
