@@ -32,7 +32,7 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         if (block == null)
             throw new InvalidOperationException("Selected statements are not inside a block.");
 
-        ExtractionTarget extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
+        var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
 
         var model = await document.GetSemanticModelAsync();
         if (model == null)
@@ -46,27 +46,22 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
 
 
-        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
-
         var invocationExpressionSyntax = SyntaxFactory.InvocationExpression(
             SyntaxFactory.IdentifierName(newMethodName),
             SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(parameters.Select(p =>
                 SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
 
+
         var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
 
+        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
+            .OfType<ILocalSymbol>()
+            .ToList();
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
         var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
         var methodBody = extractionTarget.CreateMethodBody(returns);
-        var methodSignature = MethodSignature.Create(methodBody, returnType);
-
-        var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
-            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
-            .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
-                .WithBody(methodSignature.MethodBody);
+        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
 
         var insertionPoint = extractionTarget.GetInsertionPoint();
         editor.InsertAfter(insertionPoint, methodDeclaration);
