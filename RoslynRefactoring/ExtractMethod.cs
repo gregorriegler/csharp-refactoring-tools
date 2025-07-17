@@ -37,26 +37,15 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
             throw new InvalidOperationException("SemanticModel is null.");
 
         var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block);
-        var dataFlow = extractionTarget.AnalyzeDataFlow(model);
         var replacementNode = extractionTarget.CreateReplacementNode(newMethodName, model);
         extractionTarget.ReplaceInEditor(editor, replacementNode);
-        var methodDeclaration = CreateMethodDeclaration(extractionTarget, dataFlow, model);
+        var methodDeclaration = extractionTarget.CreateMethodDeclaration(newMethodName, model);
         var insertionPoint = extractionTarget.GetInsertionPoint();
         editor.InsertAfter(insertionPoint, methodDeclaration);
 
         var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
         Console.WriteLine($"✅ Extracted method '{newMethodName}'");
         return document.WithSyntaxRoot(newRoot);
-    }
-
-    private MethodDeclarationSyntax CreateMethodDeclaration(ExtractionTarget extractionTarget, DataFlowAnalysis dataFlow,
-        SemanticModel model)
-    {
-        var methodBody = extractionTarget.CreateMethodBody(model);
-        var returnType = extractionTarget.DetermineReturnType(model);
-        var parameters = ExtractionTarget.GetParameters(dataFlow);
-        var methodDeclaration = new MethodDeclaration(newMethodName, parameters, methodBody, returnType).Create();
-        return methodDeclaration;
     }
 
     private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)

@@ -120,18 +120,24 @@ public abstract class ExtractionTarget
                     SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
         }
 
-        public static List<ILocalSymbol> GetReturns(DataFlowAnalysis dataFlow)
+        protected static List<ILocalSymbol> GetReturns(DataFlowAnalysis dataFlow)
         {
             return dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
                 .OfType<ILocalSymbol>()
                 .ToList();
         }
 
-        public static List<ParameterSyntax> GetParameters(DataFlowAnalysis dataFlow)
+        public MethodDeclarationSyntax CreateMethodDeclaration(string methodName, SemanticModel model)
         {
-            return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
-                .OfType<ILocalSymbol>()
-                .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
-                    .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
+            var methodBody = CreateMethodBody(model);
+            var returnType = DetermineReturnType(model);
+            var parameters = GetParameters(model);
+            var methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, methodName)
+                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
+                .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
+                .WithBody(methodBody);
+            return methodDeclaration;
         }
+
+        protected abstract List<ParameterSyntax> GetParameters(SemanticModel model);
     }

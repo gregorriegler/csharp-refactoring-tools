@@ -49,10 +49,18 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
             return SyntaxFactory.Block(returnStatement);
         }
 
-        public override SyntaxNode CreateReplacementNode(string methodName,
-            SemanticModel model)
+        protected override List<ParameterSyntax> GetParameters(SemanticModel model)
         {
-            return CreateMethodCall(methodName, GetParameters(AnalyzeDataFlow(model)));
+            var dataFlow = AnalyzeDataFlow(model);
+            return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
+                .OfType<ILocalSymbol>()
+                .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
+                    .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
+        }
+
+        public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
+        {
+            return CreateMethodCall(methodName, GetParameters(model));
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)

@@ -79,10 +79,19 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         return newMethodBody;
     }
 
+    protected override List<ParameterSyntax> GetParameters(SemanticModel model)
+    {
+        var dataFlow = AnalyzeDataFlow(model);
+        return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
+            .OfType<ILocalSymbol>()
+            .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
+                .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
+    }
+
     public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
     {
 
-        var methodCall = CreateMethodCall(methodName, GetParameters(AnalyzeDataFlow(model)));
+        var methodCall = CreateMethodCall(methodName, GetParameters(model));
         if (returnBehavior.RequiresReturnStatement)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
