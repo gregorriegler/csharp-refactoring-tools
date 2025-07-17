@@ -27,6 +27,8 @@ Hypothesize first and prove your hypothesis before taking action.
 - private fields start with a lower case letter, not with underscores
 - NO TryXy patterns
 - No out/ref variables 
+- Use curly braces for single line ifs
+- Avoid else if possible
 
 ## Specific to Test Code
 - Separate Arrange, Act and Assert by one line of whitespace
