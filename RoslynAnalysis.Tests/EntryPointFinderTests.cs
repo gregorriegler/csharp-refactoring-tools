@@ -5,7 +5,7 @@ namespace RoslynAnalysis.Tests;
 [TestFixture]
 public class EntryPointFinderTests
 {
-    private EntryPointFinder _entryPointFinder;
+    private EntryPointFinder entryPointFinder;
 
     [OneTimeSetUp]
     public void OneTimeSetup()
@@ -23,7 +23,7 @@ public class EntryPointFinderTests
     [SetUp]
     public void Setup()
     {
-        _entryPointFinder = new EntryPointFinder();
+        entryPointFinder = new EntryPointFinder();
     }
 
     [Test]
@@ -32,7 +32,7 @@ public class EntryPointFinderTests
         var projectPath = CreateSingleClassProject();
         var projectName = Path.GetFileNameWithoutExtension(projectPath);
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(1));
         var entryPoint = entryPoints[0];
@@ -46,7 +46,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithMultiplePublicMethods();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(3));
         Assert.That(entryPoints[0].FullyQualifiedName, Does.EndWith("Add"));
@@ -71,7 +71,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithMultiplePublicMethods();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(3));
         Assert.That(entryPoints[0].FullyQualifiedName, Does.EndWith("Add"), "First method should be Add");
@@ -93,7 +93,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithMultipleClasses();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(5));
 
@@ -145,7 +145,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithMethodCalls();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(1));
 
@@ -160,7 +160,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithMainMethod();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(1));
 
@@ -175,7 +175,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithParameterizedMethods();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(3));
 
@@ -209,7 +209,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithReturnValueMethods();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(4));
 
@@ -231,7 +231,7 @@ public class EntryPointFinderTests
     {
         var projectPath = CreateProjectWithCrossClassCalls();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(1));
 
@@ -529,7 +529,7 @@ namespace ReturnValueProject
     {
         var projectPath = CreateProjectWithCircularReferences();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(1));
 
@@ -670,7 +670,7 @@ namespace CrossCallProject
     {
         var solutionPath = CreateSolutionWithMultipleProjects();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(solutionPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(solutionPath);
 
         Assert.That(entryPoints, Has.Count.EqualTo(3));
 
@@ -803,7 +803,7 @@ EndGlobal";
     {
         var projectPath = CreateProjectWithTestMethod();
 
-        var entryPoints = await _entryPointFinder.FindEntryPointsAsync(projectPath);
+        var entryPoints = await entryPointFinder.FindEntryPointsAsync(projectPath);
 
         // Should only find the production method, not the test method
         Assert.That(entryPoints, Has.Count.EqualTo(1));
