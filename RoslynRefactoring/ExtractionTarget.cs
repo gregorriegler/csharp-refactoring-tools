@@ -73,18 +73,18 @@ namespace RoslynRefactoring
         {
             var selectedStatements = FindStatementsInSelection(selectedNode, span);
 
-            if (selectedStatements.Count == 0)
-            {
-                var selectedExpression = FindExpressionInSelection(selectedNode, span);
-                if (selectedExpression == null)
-                    throw new InvalidOperationException("No statements or expressions selected for extraction.");
-
-                return new ExpressionExtractionTarget(selectedExpression);
-            }
-            else
+            if (selectedStatements.Count > 0)
             {
                 return new StatementExtractionTarget(selectedStatements, block);
             }
+
+            var selectedExpression = FindExpressionInSelection(selectedNode, span);
+            if (selectedExpression == null)
+            {
+                throw new InvalidOperationException("No statements or expressions selected for extraction.");
+            }
+
+            return new ExpressionExtractionTarget(selectedExpression);
         }
 
         private static List<StatementSyntax> FindStatementsInSelection(SyntaxNode selectedNode, TextSpan span)
@@ -95,22 +95,21 @@ namespace RoslynRefactoring
                     .Where(stmt => span.OverlapsWith(stmt.Span))
                     .ToList();
             }
-            else if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
+
+            if (selectedNode is StatementSyntax singleStatement && span.OverlapsWith(singleStatement.Span))
             {
                 if (span.Contains(singleStatement.Span) || singleStatement.Span.Contains(span))
                 {
                     return new List<StatementSyntax> { singleStatement };
                 }
-            }
-            else
-            {
-                return selectedNode.DescendantNodesAndSelf()
-                    .OfType<StatementSyntax>()
-                    .Where(stmt => span.OverlapsWith(stmt.Span))
-                    .ToList();
+
+                return new List<StatementSyntax>();
             }
 
-            return new List<StatementSyntax>();
+            return selectedNode.DescendantNodesAndSelf()
+                .OfType<StatementSyntax>()
+                .Where(stmt => span.OverlapsWith(stmt.Span))
+                .ToList();
         }
 
         private static ExpressionSyntax? FindExpressionInSelection(SyntaxNode selectedNode, TextSpan span)
@@ -122,11 +121,15 @@ namespace RoslynRefactoring
 
             var selectedExpression = FindExpressionInDescendants(selectedNode, span);
             if (selectedExpression != null)
+            {
                 return selectedExpression;
+            }
 
             selectedExpression = FindExpressionInAncestors(selectedNode, span);
             if (selectedExpression != null)
+            {
                 return selectedExpression;
+            }
 
             if (selectedNode is EqualsValueClauseSyntax equalsValue)
             {
@@ -187,61 +190,39 @@ namespace RoslynRefactoring
 
         public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
         {
-            // For expression extraction, determine return type from the expression
             var typeInfo = model.GetTypeInfo(selectedExpression);
             var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
 
-            if (expressionType != null)
-            {
-                var typeName = expressionType.ToDisplayString();
-
-                // Handle the case where the type is just "?" (nullable without base type)
-                if (typeName == "?")
-                {
-                    // Try to get the underlying type from the symbol info
-                    var symbolInfo = model.GetSymbolInfo(selectedExpression);
-                    if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
-                    {
-                        var returnType = methodSymbol.ReturnType;
-                        if (returnType != null)
-                        {
-                            return SyntaxFactory.ParseTypeName(returnType.ToDisplayString());
-                        }
-                    }
-
-                    // Fallback to int for Math.Max specifically
-                    if (selectedExpression.ToString().StartsWith("Math.Max"))
-                    {
-                        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
-                    }
-
-                    // General fallback
-                    return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
-                }
-
-                return SyntaxFactory.ParseTypeName(typeName);
-            }
-            else
+            if (expressionType == null)
             {
                 return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
             }
+
+            var typeName = expressionType.ToDisplayString();
+
+            if (typeName != "?")
+            {
+                return SyntaxFactory.ParseTypeName(typeName);
+            }
+
+            var symbolInfo = model.GetSymbolInfo(selectedExpression);
+            if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
+            {
+                return SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
+            }
+
+            if (selectedExpression.ToString().StartsWith("Math.Max"))
+            {
+                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
+            }
+
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
         public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
         {
-            // For simple identifiers, return directly. For complex expressions, create a local variable first.
-            if (selectedExpression is IdentifierNameSyntax)
-            {
-                // Simple variable reference - return directly
-                var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
-                return SyntaxFactory.Block(returnStatement);
-            }
-            else
-            {
-                // Complex expression - return directly without creating a local variable
-                var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
-                return SyntaxFactory.Block(returnStatement);
-            }
+            var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
+            return SyntaxFactory.Block(returnStatement);
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, InvocationExpressionSyntax methodCall, SemanticModel model, DataFlowAnalysis dataFlow)
@@ -252,14 +233,12 @@ namespace RoslynRefactoring
 
         public override SyntaxNode GetInsertionPoint()
         {
-            // Find the containing method using selectedExpression.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()
             var containingMethod = selectedExpression.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
             if (containingMethod != null)
             {
                 return containingMethod;
             }
 
-            // Fallback to the selected expression itself if no method found
             return selectedExpression;
         }
 
@@ -311,27 +290,20 @@ namespace RoslynRefactoring
             if (returnBehavior.RequiresReturnStatement)
             {
                 var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-                if (containingMethod?.ReturnType != null)
-                {
-                    return containingMethod.ReturnType;
-                }
-                else
-                {
-                    return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
-                }
+                return containingMethod?.ReturnType ?? SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
             }
-            else if (returns.Count == 0)
+
+            if (returns.Count == 0)
             {
                 return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
             }
-            else if (returns.FirstOrDefault() is { } localReturnSymbol)
+
+            if (returns.FirstOrDefault() is { } localReturnSymbol)
             {
                 return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
             }
-            else
-            {
-                throw new InvalidOperationException("Unsupported return symbol type.");
-            }
+
+            throw new InvalidOperationException("Unsupported return symbol type.");
         }
 
         public override BlockSyntax CreateMethodBody(DataFlowAnalysis dataFlow)
@@ -345,8 +317,8 @@ namespace RoslynRefactoring
                 .OfType<ILocalSymbol>()
                 .ToList();
 
-            StatementSyntax callStatement;
             var newMethodBody = SyntaxFactory.Block(selectedStatements);
+            StatementSyntax callStatement;
 
             if (returnBehavior.RequiresReturnStatement)
             {
@@ -354,72 +326,11 @@ namespace RoslynRefactoring
             }
             else if (returns.Count == 0)
             {
-                // Check if we have a single variable declaration statement
-                if (selectedStatements.Count == 1 && selectedStatements.First() is LocalDeclarationStatementSyntax localDecl)
-                {
-                    var variable = localDecl.Declaration.Variables.FirstOrDefault();
-                    if (variable != null)
-                    {
-                        // This is a variable declaration - we should return the variable and replace with assignment
-                        var variableName = variable.Identifier.Text;
-                        var variableType = localDecl.Declaration.Type;
-
-                        // Add return statement to the extracted method
-                        var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variableName));
-                        newMethodBody = newMethodBody.AddStatements(returnStatement);
-
-                        // Replace with assignment to the method call
-                        callStatement = SyntaxFactory.LocalDeclarationStatement(
-                            SyntaxFactory.VariableDeclaration(variableType)
-                                .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
-                                        .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
-
-                        // Update return type to match the variable type
-                        if (model != null && variable.Initializer?.Value != null)
-                        {
-                            var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
-                            if (typeInfo.Type != null)
-                            {
-                                modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                            }
-                        }
-
-                        // Store the modified method body
-                        modifiedMethodBody = newMethodBody;
-                    }
-                    else
-                    {
-                        callStatement = SyntaxFactory.ExpressionStatement(methodCall);
-                    }
-                }
-                else
-                {
-                    callStatement = SyntaxFactory.ExpressionStatement(methodCall);
-                }
+                callStatement = HandleNoReturnsCase(methodCall, model, newMethodBody);
             }
             else if (returns.FirstOrDefault() is { } localReturnSymbol)
             {
-                var returnType = SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
-                StatementSyntax returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name));
-
-                if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
-                {
-                    callStatement = SyntaxFactory.ReturnStatement(methodCall);
-                }
-                else
-                {
-                    callStatement = SyntaxFactory.LocalDeclarationStatement(
-                        SyntaxFactory.VariableDeclaration(returnType)
-                            .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(localReturnSymbol.Name))
-                                    .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
-                }
-
-                newMethodBody = newMethodBody.AddStatements(returnStatement);
-
-                // Store the modified method body
-                modifiedMethodBody = newMethodBody;
+                callStatement = HandleLocalReturnCase(methodCall, localReturnSymbol, newMethodBody);
             }
             else
             {
@@ -431,22 +342,73 @@ namespace RoslynRefactoring
                 editor.RemoveNode(stmt);
         }
 
+        private StatementSyntax HandleNoReturnsCase(InvocationExpressionSyntax methodCall, SemanticModel model, BlockSyntax newMethodBody)
+        {
+            if (selectedStatements.Count != 1 || selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
+            {
+                return SyntaxFactory.ExpressionStatement(methodCall);
+            }
+
+            var variable = localDecl.Declaration.Variables.FirstOrDefault();
+            if (variable == null)
+            {
+                return SyntaxFactory.ExpressionStatement(methodCall);
+            }
+
+            var variableName = variable.Identifier.Text;
+            var variableType = localDecl.Declaration.Type;
+
+            var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variableName));
+            modifiedMethodBody = newMethodBody.AddStatements(returnStatement);
+
+            if (model != null && variable.Initializer?.Value != null)
+            {
+                var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+                if (typeInfo.Type != null)
+                {
+                    modifiedReturnType = SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                }
+            }
+
+            return SyntaxFactory.LocalDeclarationStatement(
+                SyntaxFactory.VariableDeclaration(variableType)
+                    .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                            .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+        }
+
+        private StatementSyntax HandleLocalReturnCase(InvocationExpressionSyntax methodCall, ILocalSymbol localReturnSymbol, BlockSyntax newMethodBody)
+        {
+            var returnType = SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
+            var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(localReturnSymbol.Name));
+
+            modifiedMethodBody = newMethodBody.AddStatements(returnStatement);
+
+            if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
+            {
+                return SyntaxFactory.ReturnStatement(methodCall);
+            }
+
+            return SyntaxFactory.LocalDeclarationStatement(
+                SyntaxFactory.VariableDeclaration(returnType)
+                    .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(localReturnSymbol.Name))
+                            .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+        }
+
         public override SyntaxNode GetInsertionPoint()
         {
-            // Find the method node using containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()
             var methodNode = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
             if (methodNode != null)
             {
                 return methodNode;
             }
 
-            // Fall back to the last selected statement if no method found
             return selectedStatements.Last();
         }
 
         public override MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
         {
-            // Check if the extraction target modified the method body or return type
             var finalMethodBody = modifiedMethodBody ?? methodBody;
             var finalReturnType = modifiedReturnType ?? returnType;
 
