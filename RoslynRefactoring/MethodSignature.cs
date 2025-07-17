@@ -1,8 +1,8 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace RoslynRefactoring
-{
-    public record MethodSignature
+namespace RoslynRefactoring;
+
+public record MethodSignature
     {
         public BlockSyntax MethodBody { get; }
         public TypeSyntax ReturnType { get; }
@@ -17,5 +17,4 @@ namespace RoslynRefactoring
         {
             return new MethodSignature(methodBody, returnType);
         }
-    }
 }

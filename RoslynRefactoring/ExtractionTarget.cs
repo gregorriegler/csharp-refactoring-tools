@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Text;
 
-namespace RoslynRefactoring
-{
-    public abstract class ExtractionTarget
+namespace RoslynRefactoring;
+
+public abstract class ExtractionTarget
     {
         public abstract DataFlowAnalysis AnalyzeDataFlow(SemanticModel model);
 
@@ -57,7 +57,7 @@ namespace RoslynRefactoring
                 return [singleStatement];
             }
 
-            return new List<StatementSyntax>();
+            return [];
 
         }
 
@@ -110,5 +110,4 @@ namespace RoslynRefactoring
                 .ThenBy(expr => expr.Span.Length)
                 .FirstOrDefault();
         }
-    }
 }

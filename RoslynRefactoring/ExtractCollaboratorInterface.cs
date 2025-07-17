@@ -68,7 +68,7 @@ public class ExtractCollaboratorInterface : IRefactoring
         var existingInterface = FindExistingInterface(documentRoot, typeName);
 
         if (existingInterface != null)
-            return new CollaboratorInfo(targetClass, typeName, new List<string>(), new List<string>(), null, existingInterface);
+            return new CollaboratorInfo(targetClass, typeName, [], [], null, existingInterface);
 
         var usedMethods = FindUsedMethods(targetClass, typeName);
         var usedProperties = FindUsedProperties(targetClass, typeName);
@@ -161,7 +161,7 @@ public class ExtractCollaboratorInterface : IRefactoring
 
     private List<string> FindUsedMethods(ClassDeclarationSyntax targetClass, string collaboratorType)
     {
-        var methodNames = new List<string>();
+        List<string> methodNames = [];
 
         var collaboratorMemberAccesses = targetClass.DescendantNodes()
             .OfType<MemberAccessExpressionSyntax>()
@@ -188,7 +188,7 @@ public class ExtractCollaboratorInterface : IRefactoring
 
     private List<string> FindUsedProperties(ClassDeclarationSyntax targetClass, string collaboratorType)
     {
-        var propertyNames = new List<string>();
+        List<string> propertyNames = [];
 
         var collaboratorMemberAccesses = targetClass.DescendantNodes()
             .OfType<MemberAccessExpressionSyntax>()
@@ -238,7 +238,7 @@ public class ExtractCollaboratorInterface : IRefactoring
 
     private List<MemberDeclarationSyntax> CreateInterfaceMembers(CollaboratorInfo collaboratorInfo)
     {
-        var members = new List<MemberDeclarationSyntax>();
+        List<MemberDeclarationSyntax> members = [];
 
         foreach (var methodName in collaboratorInfo.UsedMethods)
         {

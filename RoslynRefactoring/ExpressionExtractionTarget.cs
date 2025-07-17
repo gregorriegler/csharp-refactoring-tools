@@ -3,9 +3,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 
-namespace RoslynRefactoring
-{
-    public class ExpressionExtractionTarget : ExtractionTarget
+namespace RoslynRefactoring;
+
+public class ExpressionExtractionTarget : ExtractionTarget
     {
         private readonly ExpressionSyntax selectedExpression;
 
@@ -84,5 +84,4 @@ namespace RoslynRefactoring
         {
             return MethodSignature.Create(methodBody, returnType);
         }
-    }
 }

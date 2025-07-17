@@ -3,9 +3,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 
-namespace RoslynRefactoring
-{
-    public class StatementExtractionTarget : ExtractionTarget
+namespace RoslynRefactoring;
+
+public class StatementExtractionTarget : ExtractionTarget
     {
         private readonly List<StatementSyntax> selectedStatements;
         private readonly BlockSyntax containingBlock;
@@ -161,6 +161,5 @@ namespace RoslynRefactoring
             var finalReturnType = modifiedReturnType ?? returnType;
 
             return MethodSignature.Create(finalMethodBody, finalReturnType);
-        }
     }
 }

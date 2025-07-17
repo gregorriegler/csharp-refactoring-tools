@@ -87,7 +87,7 @@ public class BreakHardDependency : IRefactoring
     private async Task<(ClassDeclarationSyntax? TargetClass, List<(FieldDeclarationSyntax Field, string TypeName)> SingletonFields)>
         TryFindFieldFromSelection(Document document, SyntaxNode syntaxRoot)
     {
-        var singletonFields = new List<(FieldDeclarationSyntax Field, string TypeName)>();
+        List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields = [];
 
         try
         {
@@ -178,7 +178,7 @@ public class BreakHardDependency : IRefactoring
                 return (classDeclaration, singletonFields);
         }
 
-        return (null, new List<(FieldDeclarationSyntax Field, string TypeName)>());
+        return (null, []);
     }
 
     private List<(FieldDeclarationSyntax Field, string TypeName)> GetSingletonFieldsFromClass(ClassDeclarationSyntax classDeclaration)
@@ -195,7 +195,7 @@ public class BreakHardDependency : IRefactoring
         ClassDeclarationSyntax classDeclaration,
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
-        var updatedMembers = new List<MemberDeclarationSyntax>();
+        List<MemberDeclarationSyntax> updatedMembers = [];
 
         var categorizedMembers = CategorizeMembersForRefactoring(classDeclaration, singletonFields);
 
@@ -225,9 +225,9 @@ public class BreakHardDependency : IRefactoring
 
     private class CategorizedMembers
     {
-        public List<MemberDeclarationSyntax> ModifiedFields { get; } = new List<MemberDeclarationSyntax>();
-        public List<ConstructorDeclarationSyntax> Constructors { get; } = new List<ConstructorDeclarationSyntax>();
-        public List<MemberDeclarationSyntax> OtherMembers { get; } = new List<MemberDeclarationSyntax>();
+        public List<MemberDeclarationSyntax> ModifiedFields { get; } = [];
+        public List<ConstructorDeclarationSyntax> Constructors { get; } = [];
+        public List<MemberDeclarationSyntax> OtherMembers { get; } = [];
     }
 
     private CategorizedMembers CategorizeMembersForRefactoring(
@@ -305,7 +305,7 @@ public class BreakHardDependency : IRefactoring
         ObjectCreationExpressionSyntax objectCreation,
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
-        var existingArguments = objectCreation.ArgumentList?.Arguments.ToList() ?? new List<ArgumentSyntax>();
+        var existingArguments = objectCreation.ArgumentList?.Arguments.ToList() ?? [];
 
         foreach (var singletonField in singletonFields)
         {
@@ -329,7 +329,7 @@ public class BreakHardDependency : IRefactoring
         List<ConstructorDeclarationSyntax> constructors,
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
-        var result = new List<ConstructorDeclarationSyntax>();
+        List<ConstructorDeclarationSyntax> result = [];
 
         foreach (var constructor in constructors)
         {
@@ -348,7 +348,7 @@ public class BreakHardDependency : IRefactoring
         ConstructorDeclarationSyntax constructor,
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
-        var originalStatements = constructor.Body?.Statements.ToList() ?? new List<StatementSyntax>();
+        var originalStatements = constructor.Body?.Statements.ToList() ?? [];
         var updatedStatements = new List<StatementSyntax>(originalStatements);
 
         foreach (var singletonField in singletonFields)
@@ -378,7 +378,7 @@ public class BreakHardDependency : IRefactoring
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
         var updatedParameters = baseConstructor.ParameterList.Parameters.ToList();
-        var updatedStatements = baseConstructor.Body?.Statements.ToList() ?? new List<StatementSyntax>();
+        var updatedStatements = baseConstructor.Body?.Statements.ToList() ?? [];
 
         updatedStatements = updatedStatements
             .Where(s => !(s is ExpressionStatementSyntax expr &&
@@ -386,8 +386,8 @@ public class BreakHardDependency : IRefactoring
                           assignment.Right.ToString().Contains(".Instance")))
             .ToList();
 
-        var newParameters = new List<ParameterSyntax>();
-        var newAssignments = new List<StatementSyntax>();
+        List<ParameterSyntax> newParameters = [];
+        List<StatementSyntax> newAssignments = [];
 
         foreach (var singletonField in singletonFields)
         {
@@ -427,7 +427,7 @@ public class BreakHardDependency : IRefactoring
         string className,
         List<(FieldDeclarationSyntax Field, string TypeName)> singletonFields)
     {
-        var result = new List<ConstructorDeclarationSyntax>();
+        List<ConstructorDeclarationSyntax> result = [];
 
         var originalAssignments = singletonFields
             .Select(f => {

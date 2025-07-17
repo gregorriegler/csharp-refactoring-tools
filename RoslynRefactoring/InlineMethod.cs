@@ -63,13 +63,10 @@ public class InlineMethod(Cursor cursor) : IRefactoring
 
     private SyntaxNode ProcessAllInvocations(SyntaxNode root, SemanticModel semanticModel, IMethodSymbol methodSymbol, MethodDeclarationSyntax methodDeclaration, BlockSyntax methodBody)
     {
-        // Find all invocations of the same method in the document
         var allInvocations = FindAllInvocationsOfMethod(root, semanticModel, methodSymbol);
-        // Process invocations in reverse order (bottom to top) to avoid invalidating node references
         var newRoot = root;
         foreach (var inv in allInvocations.OrderByDescending(i => i.SpanStart))
         {
-            // Find the current invocation in the updated tree
             var currentInvocation = newRoot.FindNode(inv.Span) as InvocationExpressionSyntax;
             if (currentInvocation != null)
             {
@@ -102,19 +99,16 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         var symbolInfo = semanticModel.GetSymbolInfo(invocation);
         var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
 
-        // If we found the symbol directly, return it
         if (methodSymbol != null)
         {
             return methodSymbol;
         }
 
-        // If symbol resolution failed, try to find it across the project
         return FindMethodSymbolAcrossProject(semanticModel, invocation);
     }
 
     private static IMethodSymbol? FindMethodSymbolAcrossProject(SemanticModel semanticModel, InvocationExpressionSyntax invocation)
     {
-        // Extract method name and containing type from the invocation
         if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
             return null;
 
@@ -124,7 +118,6 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        // Search in the current compilation for the type
         return SearchInCompilation(semanticModel.Compilation, typeName, methodName);
     }
 
@@ -140,7 +133,6 @@ public class InlineMethod(Cursor cursor) : IRefactoring
 
     private static IMethodSymbol? SearchInCompilation(Compilation compilation, string typeName, string methodName)
     {
-        // Search for types with the given name across all namespaces in the compilation
         var allTypes = GetAllTypesFromCompilation(compilation.GlobalNamespace);
 
         return allTypes
@@ -199,14 +191,13 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         SemanticModel semanticModel,
         IMethodSymbol targetMethodSymbol)
     {
-        var invocations = new List<InvocationExpressionSyntax>();
+        List<InvocationExpressionSyntax> invocations = [];
 
         foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
         {
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
             IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol;
 
-            // If direct resolution failed, try cross-project search
             if (methodSymbol == null)
             {
                 methodSymbol = FindMethodSymbolAcrossProject(semanticModel, invocation);
@@ -259,7 +250,7 @@ public class InlineMethod(Cursor cursor) : IRefactoring
         BlockSyntax methodBody,
         Dictionary<string, ExpressionSyntax> parameterMap)
     {
-        var inlinedStatements = new List<StatementSyntax>();
+        List<StatementSyntax> inlinedStatements = [];
 
         foreach (var statement in methodBody.Statements)
         {
@@ -300,7 +291,6 @@ public class InlineMethod(Cursor cursor) : IRefactoring
             return singleReturnResult;
         }
 
-        // For multiple statements or non-return statements, replace the containing statement
         return HandleMultipleStatements(root, invocation, inlinedStatements);
     }
 

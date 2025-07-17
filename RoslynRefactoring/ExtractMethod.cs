@@ -61,10 +61,8 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
-        // Apply any modifications from the extraction target
         var methodSignature = extractionTarget.ApplyModifications(newMethodBody, returnType);
 
-        // Create the method declaration with the final values
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
             .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))

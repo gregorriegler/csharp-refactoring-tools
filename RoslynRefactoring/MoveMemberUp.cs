@@ -36,7 +36,6 @@ public class MoveMemberUp : IRefactoring
         var root = await document.GetSyntaxRootAsync();
         if (root == null) return document;
 
-        // Find the derived class
         var derivedClass = root.DescendantNodes()
             .OfType<ClassDeclarationSyntax>()
             .FirstOrDefault(c => c.Identifier.ValueText == derivedClassName);
@@ -47,7 +46,6 @@ public class MoveMemberUp : IRefactoring
             return document;
         }
 
-        // Find the base class
         var baseClass = FindBaseClass(root, derivedClass);
         if (baseClass == null)
         {
@@ -55,7 +53,6 @@ public class MoveMemberUp : IRefactoring
             return document;
         }
 
-        // Find the member to move
         var memberToMove = derivedClass.Members
             .OfType<MethodDeclarationSyntax>()
             .FirstOrDefault(m => m.Identifier.ValueText == memberName);
@@ -66,7 +63,6 @@ public class MoveMemberUp : IRefactoring
             return document;
         }
 
-        // For now, just move the method without dependency analysis (walking skeleton)
         var newRoot = MoveMemberToBaseClass(root, derivedClass, baseClass, memberToMove);
         return document.WithSyntaxRoot(newRoot);
     }
@@ -86,14 +82,11 @@ public class MoveMemberUp : IRefactoring
     private SyntaxNode MoveMemberToBaseClass(SyntaxNode root, ClassDeclarationSyntax derivedClass,
         ClassDeclarationSyntax baseClass, MethodDeclarationSyntax memberToMove)
     {
-        // Remove the member from the derived class
         var updatedDerivedClass = derivedClass.RemoveNode(memberToMove, SyntaxRemoveOptions.KeepNoTrivia);
         if (updatedDerivedClass == null) return root;
 
-        // Add the member to the base class
         var updatedBaseClass = baseClass.AddMembers(memberToMove);
 
-        // Replace both classes in the root
         var newRoot = root.ReplaceNode(derivedClass, updatedDerivedClass);
         newRoot = newRoot.ReplaceNode(newRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()
             .First(c => c.Identifier.ValueText == baseClass.Identifier.ValueText), updatedBaseClass);

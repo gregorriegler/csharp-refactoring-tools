@@ -1,8 +1,8 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace RoslynRefactoring
-{
-    public class ReturnBehavior
+namespace RoslynRefactoring;
+
+public class ReturnBehavior
     {
         private readonly List<StatementSyntax> selectedStatements;
 
@@ -21,5 +21,4 @@ namespace RoslynRefactoring
                                                      or ThrowStatementSyntax);
 
         public bool RequiresReturnStatement => HasReturnStatements || AllPathsReturnOrThrow;
-    }
 }

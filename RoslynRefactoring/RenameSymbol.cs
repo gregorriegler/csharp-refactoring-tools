@@ -38,7 +38,7 @@ public class RenameSymbol : IRefactoring
 
         var position = await GetCursorPosition(document);
         var token = root.FindToken(position);
-        
+
         return await IdentifyAndRenameSymbolSolutionWide(document, root, token);
     }
 
@@ -96,7 +96,7 @@ public class RenameSymbol : IRefactoring
             return document.WithSyntaxRoot(root);
 
         var referencesToRename = new List<SyntaxNode> { variableDeclarator };
-        
+
         var identifiersInScope = declarationScope.DescendantNodes()
             .OfType<IdentifierNameSyntax>()
             .Where(id => id.Identifier.ValueText == oldName);
@@ -135,7 +135,7 @@ public class RenameSymbol : IRefactoring
         }
 
         var referencesToRename = new List<SyntaxNode> { methodDeclaration };
-        
+
         var methodCalls = containingClass.DescendantNodes()
             .OfType<InvocationExpressionSyntax>()
             .Where(invocation =>
@@ -176,7 +176,7 @@ public class RenameSymbol : IRefactoring
                 var docRoot = await doc.GetSyntaxRootAsync();
                 if (docRoot == null) continue;
 
-                var methodReferences = new List<SyntaxNode>();
+                List<SyntaxNode> methodReferences = [];
 
                 var methodDeclarations = FindMethodDeclarations(docRoot, oldName);
                 methodReferences.AddRange(methodDeclarations);
@@ -227,12 +227,12 @@ public class RenameSymbol : IRefactoring
     {
         var identifierPosition = identifier.SpanStart;
         var targetPosition = targetVariable.SpanStart;
-        
+
         if (identifierPosition <= targetPosition)
             return false;
 
         var blocksBetween = GetBlocksBetween(targetVariable, identifier, scope);
-        
+
         foreach (var block in blocksBetween)
         {
             var shadowingDeclarations = block.DescendantNodes()
@@ -240,13 +240,13 @@ public class RenameSymbol : IRefactoring
                 .Where(v => v.Identifier.ValueText == targetVariable.Identifier.ValueText &&
                            v.SpanStart > targetPosition &&
                            v.SpanStart < identifierPosition);
-                           
+
             if (shadowingDeclarations.Any())
             {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -281,7 +281,7 @@ public class RenameSymbol : IRefactoring
                 }
                 return false;
             });
-        
+
         return methodCalls.Select(call => call.Expression);
     }
 }
