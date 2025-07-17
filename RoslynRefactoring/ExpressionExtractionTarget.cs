@@ -80,8 +80,4 @@ public class ExpressionExtractionTarget : ExtractionTarget
             return selectedExpression;
         }
 
-        public override MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
-        {
-            return MethodSignature.Create(methodBody, returnType);
-        }
 }

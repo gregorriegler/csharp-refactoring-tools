@@ -13,6 +13,9 @@ public class StatementExtractionTarget : ExtractionTarget
     private BlockSyntax? modifiedMethodBody;
     private TypeSyntax? modifiedReturnType;
 
+    public BlockSyntax? ModifiedMethodBody => modifiedMethodBody;
+    public TypeSyntax? ModifiedReturnType => modifiedReturnType;
+
     public StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
     {
         this.selectedStatements = selectedStatements;
@@ -159,11 +162,4 @@ public class StatementExtractionTarget : ExtractionTarget
         return selectedStatements.Last();
     }
 
-    public override MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType)
-    {
-        var finalMethodBody = modifiedMethodBody ?? methodBody;
-        var finalReturnType = modifiedReturnType ?? returnType;
-
-        return MethodSignature.Create(finalMethodBody, finalReturnType);
-    }
 }

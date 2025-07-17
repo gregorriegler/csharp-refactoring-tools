@@ -18,7 +18,6 @@ public abstract class ExtractionTarget
 
         public abstract SyntaxNode GetInsertionPoint();
 
-        public abstract MethodSignature ApplyModifications(BlockSyntax methodBody, TypeSyntax returnType);
 
         public static ExtractionTarget CreateFromSelection(SyntaxNode selectedNode, TextSpan span, BlockSyntax block)
         {
