@@ -50,13 +50,19 @@ public class EntryPointValidator
     public bool IsValidEntryPoint(MethodDeclarationSyntax methodDeclaration, IMethodSymbol methodSymbol)
     {
         if (!methodDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)))
+        {
             return false;
+        }
 
         if (methodSymbol.ContainingType == null)
+        {
             return false;
+        }
 
         if (IsTestMethod(methodSymbol))
+        {
             return false;
+        }
 
         return true;
     }
@@ -72,11 +78,11 @@ public class EntryPointValidator
 public class EntryPointFinder
 {
     private const int DEFAULT_REACHABLE_COUNT = 1;
-    private readonly EntryPointValidator _validator;
+    private readonly EntryPointValidator validator;
 
     public EntryPointFinder()
     {
-        _validator = new EntryPointValidator();
+        validator = new EntryPointValidator();
     }
 
     public async Task<List<EntryPoint>> FindEntryPointsAsync(string projectPath)
@@ -84,7 +90,9 @@ public class EntryPointFinder
         var projects = await LoadProjectsAsync(projectPath);
 
         if (!projects.Any())
-            return new List<EntryPoint>();
+        {
+            return [];
+        }
 
         var documents = projects.SelectMany(p => p.Documents).ToList();
 
@@ -126,10 +134,14 @@ public class EntryPointFinder
     {
         var methodSymbol = CreateMethodSymbolResolver(methodDeclaration, semanticModel);
         if (methodSymbol == null)
+        {
             return null;
+        }
 
-        if (!_validator.IsValidEntryPoint(methodDeclaration, methodSymbol))
+        if (!validator.IsValidEntryPoint(methodDeclaration, methodSymbol))
+        {
             return null;
+        }
 
         return CreateEntryPointFromMethod(document, methodDeclaration, methodSymbol);
     }
@@ -173,12 +185,17 @@ public class EntryPointFinder
         {
             var (currentMethod, currentSemanticModel) = methodsToProcess.Dequeue();
             var currentMethodSymbol = CreateMethodSymbolResolver(currentMethod, currentSemanticModel);
-            if (currentMethodSymbol == null) continue;
+            if (currentMethodSymbol == null)
+            {
+                continue;
+            }
 
             var currentMethodFullName = GetFullyQualifiedMethodName(currentMethodSymbol);
 
             if (processedMethods.Contains(currentMethodFullName))
+            {
                 continue;
+            }
 
             processedMethods.Add(currentMethodFullName);
             reachableMethods.Add(currentMethodFullName);
@@ -226,10 +243,16 @@ public class EntryPointFinder
         List<MethodInfo> allMethods)
     {
         var syntaxTree = await document.GetSyntaxTreeAsync();
-        if (syntaxTree == null) return;
+        if (syntaxTree == null)
+        {
+            return;
+        }
 
         var semanticModel = await document.GetSemanticModelAsync();
-        if (semanticModel == null) return;
+        if (semanticModel == null)
+        {
+            return;
+        }
 
         var root = await syntaxTree.GetRootAsync();
         var methodDeclarations = root.DescendantNodes().OfType<MethodDeclarationSyntax>();
@@ -285,7 +308,9 @@ public class EntryPointFinder
         foreach (var (entryPoint, document, methodDeclaration, semanticModel) in allPublicMethods)
         {
             if (calledMethods.Contains(entryPoint.FullyQualifiedName))
+            {
                 continue;
+            }
 
             var reachableCount = CalculateReachableMethodsCount(methodDeclaration, semanticModel, allMethods);
 
@@ -310,7 +335,10 @@ public class EntryPointFinder
         Queue<(MethodDeclarationSyntax method, SemanticModel model)> methodsToProcess,
         HashSet<string> processedMethods)
     {
-        if (currentMethod.Body == null) return;
+        if (currentMethod.Body == null)
+        {
+            return;
+        }
 
         var invocationExpressions = currentMethod.Body.DescendantNodes().OfType<InvocationExpressionSyntax>();
 

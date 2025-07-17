@@ -88,11 +88,11 @@ public static class AnalysisInfoGenerator
         {
             var xmlDoc = System.Xml.Linq.XDocument.Load(GetXmlDocumentationPath());
             var typeName = analysisType.FullName;
-            
+
             var summaryElement = xmlDoc.Descendants("member")
                 .FirstOrDefault(m => m.Attribute("name")?.Value == $"T:{typeName}")
                 ?.Element("summary");
-                
+
             if (summaryElement != null)
             {
                 return summaryElement.Value.Trim();
@@ -101,15 +101,14 @@ public static class AnalysisInfoGenerator
         catch
         {
         }
-        
+
         return "No description available";
     }
-    
+
     private static string GetXmlDocumentationPath()
     {
         var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-        var xmlPath = Path.ChangeExtension(assemblyLocation, ".xml");
-        return xmlPath;
+        return Path.ChangeExtension(assemblyLocation, ".xml");
     }
 
     private static string[] GetArgumentsFromType(Type analysisType)
@@ -126,8 +125,7 @@ public static class AnalysisInfoGenerator
             return [];
         }
 
-        var constructors = analysisType.GetConstructors();
-        var primaryConstructor = constructors.FirstOrDefault();
+        var primaryConstructor = analysisType.GetConstructors().FirstOrDefault();
 
         if (primaryConstructor == null)
         {
