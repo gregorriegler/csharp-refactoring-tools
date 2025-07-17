@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Text;
+using static RoslynRefactoring.MethodSignature;
 
 namespace RoslynRefactoring;
 
@@ -59,7 +60,9 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         extractionTarget.ReplaceInEditor(editor, invocationExpressionSyntax, model, returns);
 
-        var methodSignature = MethodSignature(extractionTarget, model, dataFlow);
+        var returnType = extractionTarget.DetermineReturnType(model, dataFlow);
+        var methodBody = extractionTarget.CreateMethodBody();
+        var methodSignature = MethodSignature.Create(methodBody, returnType);
 
         var methodDeclaration = SyntaxFactory.MethodDeclaration(methodSignature.ReturnType, newMethodName)
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
@@ -73,19 +76,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         Console.WriteLine($"✅ Extracted method '{newMethodName}'");
         return document.WithSyntaxRoot(newRoot);
-    }
-
-    private static MethodSignature MethodSignature(ExtractionTarget extractionTarget, SemanticModel model, DataFlowAnalysis dataFlow)
-    {
-        var finalReturnType = extractionTarget.DetermineReturnType(model, dataFlow);
-        if (extractionTarget is StatementExtractionTarget statementTarget)
-        {
-            finalReturnType = statementTarget.ModifiedReturnType ?? extractionTarget.DetermineReturnType(model, dataFlow);
-        }
-
-        var finalMethodBody = extractionTarget.CreateMethodBody();
-        var methodSignature = RoslynRefactoring.MethodSignature.Create(finalMethodBody, finalReturnType);
-        return methodSignature;
     }
 
     private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)

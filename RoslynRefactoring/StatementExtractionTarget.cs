@@ -38,6 +38,7 @@ public class StatementExtractionTarget : ExtractionTarget
 
     public override TypeSyntax DetermineReturnType(SemanticModel model, DataFlowAnalysis dataFlow)
     {
+        if (modifiedReturnType != null) return modifiedReturnType;
         if (returnBehavior.RequiresReturnStatement)
         {
             var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
