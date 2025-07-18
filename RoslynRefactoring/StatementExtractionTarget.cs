@@ -30,8 +30,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     {
         if (returnBehavior.RequiresReturnStatement)
         {
-            var containingMethod = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-            return containingMethod?.ReturnType ??
+            return (containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault())?.ReturnType ??
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
