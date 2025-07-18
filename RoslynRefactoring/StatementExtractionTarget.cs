@@ -5,14 +5,27 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynRefactoring;
 
-public sealed class StatementExtractionTarget(
-    List<StatementSyntax> selectedStatements,
-    BlockSyntax containingBlock,
-    SemanticModel semanticModel
-) : ExtractionTarget(semanticModel)
+public sealed class StatementExtractionTarget : ExtractionTarget
 {
-    private readonly ReturnBehavior returnBehavior = new(selectedStatements);
+    private readonly List<StatementSyntax> selectedStatements;
+    private readonly BlockSyntax containingBlock;
+    private readonly ReturnBehavior returnBehavior;
+    private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
 
+    public StatementExtractionTarget(
+        List<StatementSyntax> selectedStatements,
+        BlockSyntax containingBlock,
+        SemanticModel semanticModel
+    ) : base(semanticModel)
+    {
+        this.selectedStatements = selectedStatements;
+        this.containingBlock = containingBlock;
+        returnBehavior = new ReturnBehavior(selectedStatements);
+        var dataFlow = semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
+        if (dataFlow == null)
+            throw new InvalidOperationException("DataFlow is null.");
+        extractedCodeDataFlow = new ExtractedCodeDataFlow(dataFlow);
+    }
 
     private DataFlowAnalysis AnalyzeDataFlow()
     {
