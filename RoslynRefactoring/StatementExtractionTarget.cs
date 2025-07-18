@@ -105,20 +105,22 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     public override SyntaxNode CreateReplacementNode(string methodName)
     {
-        var methodCall = CreateMethodCall(methodName, GetParameters());
         if (returnBehavior.RequiresReturnStatement)
         {
+            var methodCall = CreateMethodCall(methodName, GetParameters());
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
         var returns = extractedCodeDataFlow.GetReturns();
         if (returns.Count == 0)
         {
+            var methodCall = CreateMethodCall(methodName, GetParameters());
             return GetCallStatement(methodCall);
         }
 
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
+            var methodCall = CreateMethodCall(methodName, GetParameters());
             return CreateLocalReturnStatement(methodCall, localReturnSymbol);
         }
 
