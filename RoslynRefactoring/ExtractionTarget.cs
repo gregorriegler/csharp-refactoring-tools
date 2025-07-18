@@ -124,13 +124,6 @@ public abstract class ExtractionTarget
                 SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Identifier.Text))))));
     }
 
-    protected static List<ILocalSymbol> GetReturns(DataFlowAnalysis dataFlow)
-    {
-        return dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
-    }
-
     public MethodDeclarationSyntax CreateMethodDeclaration(string methodName)
     {
         var methodBody = CreateMethodBody();
