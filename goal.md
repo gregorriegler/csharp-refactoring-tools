@@ -105,6 +105,8 @@ return total;
 // Extract: calculation logic into a method returning int
 ```
 
+- [x] Extract code with loop that calculates and returns a single value
+
 ### Local Variable Usage Extraction - REFINED
 Extract code that uses local variables as parameters.
 
