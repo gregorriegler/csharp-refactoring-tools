@@ -244,6 +244,37 @@ public class DataItem
         await VerifyExtract(code, CodeSelection.Parse("7:21-11:28"), "ProcessActiveNames");
     }
 
+    [Test]
+    public async Task CanExtractConditionalLogic()
+    {
+        const string code = @"
+public class UserProcessor
+{
+    public void ProcessUser(User user)
+    {
+        if (user.Age >= 18)
+        {
+            user.CanVote = true;
+            user.Status = ""Adult"";
+        }
+        else
+        {
+            user.CanVote = false;
+            user.Status = ""Minor"";
+        }
+    }
+}
+
+public class User
+{
+    public int Age { get; set; }
+    public bool CanVote { get; set; }
+    public string Status { get; set; }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-14:10"), "SetVotingStatus");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

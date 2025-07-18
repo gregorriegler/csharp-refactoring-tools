@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ### 1. Expression-Only Extraction
 **Problem**: Current implementation focuses on `StatementSyntax` but fails when extracting pure expressions.
@@ -112,7 +112,7 @@ Extract code that uses local variables as parameters.
 
 This scenario is already fully implemented by the existing ExtractMethod functionality. The current implementation correctly identifies local variables used in selected code and passes them as parameters to the extracted method.
 
-### Method Call Chain Extraction - DRAFT
+### Method Call Chain Extraction - REFINED
 Extract a chain of method calls into a separate method.
 ```csharp
 var result = data
@@ -123,7 +123,9 @@ var result = data
 // Extract: the entire LINQ chain
 ```
 
-### Conditional Logic Extraction - DRAFT
+- [x] Extract LINQ method chain spanning multiple lines
+
+### Conditional Logic Extraction - REFINED
 Extract simple if-else logic into a method.
 ```csharp
 if (user.Age >= 18)
@@ -138,6 +140,8 @@ else
 }
 // Extract: age-based status setting logic
 ```
+
+- [x] Extract if-else conditional logic into separate method
 
 ### Loop Body Extraction - DRAFT
 Extract the body of a simple loop into a method.
