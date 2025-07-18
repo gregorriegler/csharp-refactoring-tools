@@ -216,6 +216,34 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("6:0-10:21"), "ComputeTotal");
     }
 
+    [Test]
+    public async Task CanExtractMethodCallChain()
+    {
+        const string code = @"
+public class DataProcessor
+{
+    public void ProcessData()
+    {
+        var data = GetData();
+        var result = data
+            .Where(x => x.IsActive)
+            .Select(x => x.Name)
+            .OrderBy(x => x)
+            .ToList();
+    }
+
+    private IEnumerable<DataItem> GetData() => throw new NotImplementedException();
+}
+
+public class DataItem
+{
+    public bool IsActive { get; set; }
+    public string Name { get; set; }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("7:21-11:28"), "ProcessActiveNames");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
