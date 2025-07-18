@@ -70,8 +70,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     protected override BlockSyntax CreateMethodBody()
     {
-        var dataFlow = AnalyzeDataFlow();
-        var returns = GetReturns(dataFlow);
+        var returns = extractedCodeDataFlow.GetReturns();
         if (returns.Count != 0)
         {
             return returns.FirstOrDefault() is { } returnSymbol
