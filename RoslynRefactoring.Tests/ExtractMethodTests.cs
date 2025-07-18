@@ -179,6 +179,23 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("6:0-7:29"), "PrintX");
     }
 
+    [Test]
+    public async Task CanExtractThreeStatementsWithLocalVariables()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var x = 10;
+        var y = 20;
+        Console.WriteLine(x + y);
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-8:33"), "PrintSum");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

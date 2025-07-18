@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ### 1. Expression-Only Extraction
 **Problem**: Current implementation focuses on `StatementSyntax` but fails when extracting pure expressions.
@@ -91,7 +91,7 @@ Console.WriteLine(x + y);
 Examples (ordered by simplicity):
 - [x] Extract single statement: `Console.WriteLine("Hello");` → extract into void method
 - [x] Extract two statements: `var x = 10; Console.WriteLine(x);` → extract both into void method
-- [ ] Extract three statements with local variables: `var x = 10; var y = 20; Console.WriteLine(x + y);` → extract all into void method
+- [x] Extract three statements with local variables: `var x = 10; var y = 20; Console.WriteLine(x + y);` → extract all into void method
 
 ### Single Return Value Extraction - DRAFT
 Extract code that calculates and returns a single value.
