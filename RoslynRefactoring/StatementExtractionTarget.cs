@@ -21,10 +21,9 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         this.selectedStatements = selectedStatements;
         this.containingBlock = containingBlock;
         returnBehavior = new ReturnBehavior(selectedStatements);
-        var dataFlow = semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
-        if (dataFlow == null)
-            throw new InvalidOperationException("DataFlow is null.");
-        extractedCodeDataFlow = new ExtractedCodeDataFlow(dataFlow);
+        extractedCodeDataFlow = new ExtractedCodeDataFlow(
+            semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
+            ?? throw new InvalidOperationException("DataFlow is null."));
     }
 
     protected override TypeSyntax DetermineReturnType()
