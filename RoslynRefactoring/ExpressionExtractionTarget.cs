@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynRefactoring;
 
-public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpression) : ExtractionTarget
+public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpression, SemanticModel semanticModel) : ExtractionTarget(semanticModel)
 {
     public DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
         {
@@ -15,9 +15,9 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
             return dataFlow;
         }
 
-    protected override TypeSyntax DetermineReturnType(SemanticModel model)
+    protected override TypeSyntax DetermineReturnType()
         {
-            var typeInfo = model.GetTypeInfo(selectedExpression);
+            var typeInfo = semanticModel.GetTypeInfo(selectedExpression);
             var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
 
             if (expressionType == null)
@@ -32,7 +32,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
                 return SyntaxFactory.ParseTypeName(typeName);
             }
 
-            var symbolInfo = model.GetSymbolInfo(selectedExpression);
+            var symbolInfo = semanticModel.GetSymbolInfo(selectedExpression);
             if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
             {
                 return SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
@@ -43,24 +43,24 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
                 : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-    protected override BlockSyntax CreateMethodBody(SemanticModel model)
+    protected override BlockSyntax CreateMethodBody()
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);
         }
 
-        protected override List<ParameterSyntax> GetParameters(SemanticModel model)
+        protected override List<ParameterSyntax> GetParameters()
         {
-            var dataFlow = AnalyzeDataFlow(model);
+            var dataFlow = AnalyzeDataFlow(semanticModel);
             return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
                 .OfType<ILocalSymbol>()
                 .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
                     .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
         }
 
-        public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
+        public override SyntaxNode CreateReplacementNode(string methodName)
         {
-            return CreateMethodCall(methodName, GetParameters(model));
+            return CreateMethodCall(methodName, GetParameters());
         }
 
         public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)

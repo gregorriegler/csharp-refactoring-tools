@@ -8,24 +8,31 @@ namespace RoslynRefactoring;
 
 public abstract class ExtractionTarget
 {
-    protected abstract TypeSyntax DetermineReturnType(SemanticModel model);
+    protected readonly SemanticModel semanticModel;
 
-    protected abstract BlockSyntax CreateMethodBody(SemanticModel model);
+    protected ExtractionTarget(SemanticModel semanticModel)
+    {
+        this.semanticModel = semanticModel;
+    }
 
-    public abstract SyntaxNode CreateReplacementNode(string methodName, SemanticModel model);
+    protected abstract TypeSyntax DetermineReturnType();
+
+    protected abstract BlockSyntax CreateMethodBody();
+
+    public abstract SyntaxNode CreateReplacementNode(string methodName);
 
     public abstract void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode);
 
     public abstract SyntaxNode GetInsertionPoint();
 
 
-    public static ExtractionTarget CreateFromSelection(SyntaxNode selectedNode, TextSpan span, BlockSyntax block)
+    public static ExtractionTarget CreateFromSelection(SyntaxNode selectedNode, TextSpan span, BlockSyntax block, SemanticModel semanticModel)
     {
         var selectedStatements = FindStatementsInSelection(selectedNode, span);
 
         if (selectedStatements.Count > 0)
         {
-            return new StatementExtractionTarget(selectedStatements, block);
+            return new StatementExtractionTarget(selectedStatements, block, semanticModel);
         }
 
         var selectedExpression = FindExpressionInSelection(selectedNode, span);
@@ -34,7 +41,7 @@ public abstract class ExtractionTarget
             throw new InvalidOperationException("No statements or expressions selected for extraction.");
         }
 
-        return new ExpressionExtractionTarget(selectedExpression);
+        return new ExpressionExtractionTarget(selectedExpression, semanticModel);
     }
 
     private static List<StatementSyntax> FindStatementsInSelection(SyntaxNode selectedNode, TextSpan span)
@@ -124,11 +131,11 @@ public abstract class ExtractionTarget
             .ToList();
     }
 
-    public MethodDeclarationSyntax CreateMethodDeclaration(string methodName, SemanticModel model)
+    public MethodDeclarationSyntax CreateMethodDeclaration(string methodName)
     {
-        var methodBody = CreateMethodBody(model);
-        var returnType = DetermineReturnType(model);
-        var parameters = GetParameters(model);
+        var methodBody = CreateMethodBody();
+        var returnType = DetermineReturnType();
+        var parameters = GetParameters();
         var methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, methodName)
             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
             .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
@@ -136,5 +143,5 @@ public abstract class ExtractionTarget
         return methodDeclaration;
     }
 
-    protected abstract List<ParameterSyntax> GetParameters(SemanticModel model);
+    protected abstract List<ParameterSyntax> GetParameters();
 }

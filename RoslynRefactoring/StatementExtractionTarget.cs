@@ -7,8 +7,9 @@ namespace RoslynRefactoring;
 
 public sealed class StatementExtractionTarget(
     List<StatementSyntax> selectedStatements,
-    BlockSyntax containingBlock
-) : ExtractionTarget
+    BlockSyntax containingBlock,
+    SemanticModel semanticModel
+) : ExtractionTarget(semanticModel)
 {
     private readonly ReturnBehavior returnBehavior = new(selectedStatements);
 
@@ -21,7 +22,7 @@ public sealed class StatementExtractionTarget(
         return dataFlow;
     }
 
-    protected override TypeSyntax DetermineReturnType(SemanticModel model)
+    protected override TypeSyntax DetermineReturnType()
     {
         if (returnBehavior.RequiresReturnStatement)
         {
@@ -30,7 +31,7 @@ public sealed class StatementExtractionTarget(
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
-        var dataFlow = AnalyzeDataFlow(model);
+        var dataFlow = AnalyzeDataFlow(semanticModel);
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
             .ToList();
@@ -43,7 +44,7 @@ public sealed class StatementExtractionTarget(
             var variable = localDecl.Declaration.Variables.FirstOrDefault();
             if (variable?.Initializer?.Value == null)
                 return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
-            var typeInfo = model.GetTypeInfo(variable.Initializer.Value);
+            var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
             return typeInfo.Type != null
                 ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
                 : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
@@ -57,9 +58,9 @@ public sealed class StatementExtractionTarget(
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
-    protected override BlockSyntax CreateMethodBody(SemanticModel model)
+    protected override BlockSyntax CreateMethodBody()
     {
-        var dataFlow = AnalyzeDataFlow(model);
+        var dataFlow = AnalyzeDataFlow(semanticModel);
         var returns = GetReturns(dataFlow);
         if (returns.Count != 0)
         {
@@ -82,24 +83,24 @@ public sealed class StatementExtractionTarget(
         return newMethodBody;
     }
 
-    protected override List<ParameterSyntax> GetParameters(SemanticModel model)
+    protected override List<ParameterSyntax> GetParameters()
     {
-        var dataFlow = AnalyzeDataFlow(model);
+        var dataFlow = AnalyzeDataFlow(semanticModel);
         return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
             .OfType<ILocalSymbol>()
             .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
                 .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
     }
 
-    public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
+    public override SyntaxNode CreateReplacementNode(string methodName)
     {
-        var methodCall = CreateMethodCall(methodName, GetParameters(model));
+        var methodCall = CreateMethodCall(methodName, GetParameters());
         if (returnBehavior.RequiresReturnStatement)
         {
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
-        var returns = GetReturns(AnalyzeDataFlow(model));
+        var returns = GetReturns(AnalyzeDataFlow(semanticModel));
         if (returns.Count == 0)
         {
             return GetCallStatement(methodCall);
