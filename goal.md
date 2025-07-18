@@ -105,15 +105,10 @@ return total;
 // Extract: calculation logic into a method returning int
 ```
 
-### Local Variable Usage Extraction - DRAFT
+### Local Variable Usage Extraction - REFINED
 Extract code that uses local variables as parameters.
-```csharp
-var name = "John";
-var age = 25;
-var message = $"Hello {name}, you are {age} years old";
-Console.WriteLine(message);
-// Extract: message creation and printing, passing name and age as parameters
-```
+
+This scenario is already fully implemented by the existing ExtractMethod functionality. The current implementation correctly identifies local variables used in selected code and passes them as parameters to the extracted method.
 
 ### Method Call Chain Extraction - DRAFT
 Extract a chain of method calls into a separate method.
