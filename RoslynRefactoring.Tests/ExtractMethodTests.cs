@@ -146,6 +146,23 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("8:21-8:35"), "GetMaxValue");
     }
 
+    [Test]
+    public async Task CanExtractNestedExpressions()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var a = 2;
+        var b = 3;
+        var result = Math.Max(a + 1, b * 2);
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("8:21-8:43"), "GetMaxOfCalculations");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
