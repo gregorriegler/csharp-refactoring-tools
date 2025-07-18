@@ -38,16 +38,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
         if (returns.Count == 0)
         {
-            if (selectedStatements.Count != 1 ||
-                selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
-                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
-            var variable = localDecl.Declaration.Variables.FirstOrDefault();
-            if (variable?.Initializer?.Value == null)
-                return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
-            var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-            return typeInfo.Type != null
-                ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
-                : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            return DetermineVoidReturnType();
         }
 
         if (returns.FirstOrDefault() is { } localReturnSymbol)
@@ -56,6 +47,20 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         throw new InvalidOperationException("Unsupported return symbol type.");
+    }
+
+    private TypeSyntax DetermineVoidReturnType()
+    {
+        if (selectedStatements.Count != 1 ||
+            selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+        var variable = localDecl.Declaration.Variables.FirstOrDefault();
+        if (variable?.Initializer?.Value == null)
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+        var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
+        return typeInfo.Type != null
+            ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
+            : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
     }
 
     protected override BlockSyntax CreateMethodBody()
