@@ -163,6 +163,22 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("8:21-8:43"), "GetMaxOfCalculations");
     }
 
+    [Test]
+    public async Task CanExtractTwoStatements()
+    {
+        const string code = @"
+public class Calculator
+{
+    public void Calculate()
+    {
+        var x = 10;
+        Console.WriteLine(x);
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-7:29"), "PrintX");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
