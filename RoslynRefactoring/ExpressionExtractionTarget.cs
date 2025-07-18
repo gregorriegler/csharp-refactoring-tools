@@ -26,7 +26,6 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         }
 
         var typeName = expressionType.ToDisplayString();
-
         if (typeName != "?")
         {
             return SyntaxFactory.ParseTypeName(typeName);
