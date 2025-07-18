@@ -14,9 +14,9 @@ public sealed class StatementExtractionTarget(
     private readonly ReturnBehavior returnBehavior = new(selectedStatements);
 
 
-    private DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
+    private DataFlowAnalysis AnalyzeDataFlow()
     {
-        var dataFlow = model.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
+        var dataFlow = semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
         if (dataFlow == null)
             throw new InvalidOperationException("DataFlow is null.");
         return dataFlow;
@@ -31,7 +31,7 @@ public sealed class StatementExtractionTarget(
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
-        var dataFlow = AnalyzeDataFlow(semanticModel);
+        var dataFlow = AnalyzeDataFlow();
         var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
             .OfType<ILocalSymbol>()
             .ToList();
@@ -60,7 +60,7 @@ public sealed class StatementExtractionTarget(
 
     protected override BlockSyntax CreateMethodBody()
     {
-        var dataFlow = AnalyzeDataFlow(semanticModel);
+        var dataFlow = AnalyzeDataFlow();
         var returns = GetReturns(dataFlow);
         if (returns.Count != 0)
         {
@@ -85,7 +85,7 @@ public sealed class StatementExtractionTarget(
 
     protected override List<ParameterSyntax> GetParameters()
     {
-        var dataFlow = AnalyzeDataFlow(semanticModel);
+        var dataFlow = AnalyzeDataFlow();
         return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
             .OfType<ILocalSymbol>()
             .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
@@ -100,7 +100,7 @@ public sealed class StatementExtractionTarget(
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
-        var returns = GetReturns(AnalyzeDataFlow(semanticModel));
+        var returns = GetReturns(AnalyzeDataFlow());
         if (returns.Count == 0)
         {
             return GetCallStatement(methodCall);
