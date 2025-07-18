@@ -72,6 +72,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         var newMethodBody = SyntaxFactory.Block(selectedStatements);
         if (selectedStatements.Count != 1 ||
             selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl) return newMethodBody;
+
         var variable = localDecl.Declaration.Variables.FirstOrDefault();
         if (variable != null)
         {
