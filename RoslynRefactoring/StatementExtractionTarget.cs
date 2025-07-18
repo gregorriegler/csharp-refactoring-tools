@@ -44,10 +44,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         }
 
-        var dataFlow = AnalyzeDataFlow();
-        var returns = dataFlow.DataFlowsOut.Intersect(dataFlow.WrittenInside, SymbolEqualityComparer.Default)
-            .OfType<ILocalSymbol>()
-            .ToList();
+        var returns = extractedCodeDataFlow.GetReturns();
 
         if (returns.Count == 0)
         {
