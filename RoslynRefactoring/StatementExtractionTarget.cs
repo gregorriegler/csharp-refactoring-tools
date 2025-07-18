@@ -120,7 +120,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
-        var returns = GetReturns(AnalyzeDataFlow());
+        var returns = extractedCodeDataFlow.GetReturns();
         if (returns.Count == 0)
         {
             return GetCallStatement(methodCall);
