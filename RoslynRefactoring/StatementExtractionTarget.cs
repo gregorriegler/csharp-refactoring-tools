@@ -27,14 +27,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         extractedCodeDataFlow = new ExtractedCodeDataFlow(dataFlow);
     }
 
-    private DataFlowAnalysis AnalyzeDataFlow()
-    {
-        var dataFlow = semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
-        if (dataFlow == null)
-            throw new InvalidOperationException("DataFlow is null.");
-        return dataFlow;
-    }
-
     protected override TypeSyntax DetermineReturnType()
     {
         if (returnBehavior.RequiresReturnStatement)
