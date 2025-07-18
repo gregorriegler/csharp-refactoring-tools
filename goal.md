@@ -79,7 +79,7 @@ Examples (ordered by simplicity):
 - [x] Extract method call: `var result = Math.Max(a, b);` → extract `Math.Max(a, b)`
 - [x] Extract nested expressions: `var result = Math.Max(a + 1, b * 2);` → extract `Math.Max(a + 1, b * 2)`
 
-### Simple Statement Block Extraction - DRAFT
+### Simple Statement Block Extraction - REFINED
 Extract a sequence of simple statements that don't return values.
 ```csharp
 var x = 10;
@@ -87,6 +87,11 @@ var y = 20;
 Console.WriteLine(x + y);
 // Extract: all three statements into a void method
 ```
+
+Examples (ordered by simplicity):
+- [ ] Extract single statement: `Console.WriteLine("Hello");` → extract into void method
+- [ ] Extract two statements: `var x = 10; Console.WriteLine(x);` → extract both into void method
+- [ ] Extract three statements with local variables: `var x = 10; var y = 20; Console.WriteLine(x + y);` → extract all into void method
 
 ### Single Return Value Extraction - DRAFT
 Extract code that calculates and returns a single value.
