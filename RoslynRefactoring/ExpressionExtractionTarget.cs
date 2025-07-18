@@ -7,7 +7,7 @@ namespace RoslynRefactoring;
 
 public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpression) : ExtractionTarget
 {
-    public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
+    public DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
         {
             var dataFlow = model.AnalyzeDataFlow(selectedExpression);
             if (dataFlow == null)
@@ -15,7 +15,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
             return dataFlow;
         }
 
-        public override TypeSyntax DetermineReturnType(SemanticModel model)
+    protected override TypeSyntax DetermineReturnType(SemanticModel model)
         {
             var typeInfo = model.GetTypeInfo(selectedExpression);
             var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
@@ -43,7 +43,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
                 : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
         }
 
-        public override BlockSyntax CreateMethodBody(SemanticModel model)
+    protected override BlockSyntax CreateMethodBody(SemanticModel model)
         {
             var returnStatement = SyntaxFactory.ReturnStatement(selectedExpression);
             return SyntaxFactory.Block(returnStatement);

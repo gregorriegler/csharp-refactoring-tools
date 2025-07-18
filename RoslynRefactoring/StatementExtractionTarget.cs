@@ -5,13 +5,15 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace RoslynRefactoring;
 
-public class StatementExtractionTarget(List<StatementSyntax> selectedStatements, BlockSyntax containingBlock)
-    : ExtractionTarget
+public sealed class StatementExtractionTarget(
+    List<StatementSyntax> selectedStatements,
+    BlockSyntax containingBlock
+) : ExtractionTarget
 {
     private readonly ReturnBehavior returnBehavior = new(selectedStatements);
 
 
-    public override DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
+    private DataFlowAnalysis AnalyzeDataFlow(SemanticModel model)
     {
         var dataFlow = model.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last());
         if (dataFlow == null)
@@ -19,7 +21,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         return dataFlow;
     }
 
-    public override TypeSyntax DetermineReturnType(SemanticModel model)
+    protected override TypeSyntax DetermineReturnType(SemanticModel model)
     {
         if (returnBehavior.RequiresReturnStatement)
         {
@@ -55,7 +57,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
-    public override BlockSyntax CreateMethodBody(SemanticModel model)
+    protected override BlockSyntax CreateMethodBody(SemanticModel model)
     {
         var dataFlow = AnalyzeDataFlow(model);
         var returns = GetReturns(dataFlow);
@@ -76,6 +78,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
             return newMethodBody.AddStatements(
                 SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
         }
+
         return newMethodBody;
     }
 
@@ -90,7 +93,6 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
 
     public override SyntaxNode CreateReplacementNode(string methodName, SemanticModel model)
     {
-
         var methodCall = CreateMethodCall(methodName, GetParameters(model));
         if (returnBehavior.RequiresReturnStatement)
         {
@@ -107,6 +109,7 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
         {
             return CreateLocalReturnStatement(methodCall, localReturnSymbol);
         }
+
         throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
@@ -141,7 +144,8 @@ public class StatementExtractionTarget(List<StatementSyntax> selectedStatements,
                         .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
     }
 
-    private StatementSyntax CreateLocalReturnStatement(InvocationExpressionSyntax methodCall, ILocalSymbol localReturnSymbol)
+    private StatementSyntax CreateLocalReturnStatement(InvocationExpressionSyntax methodCall,
+        ILocalSymbol localReturnSymbol)
     {
         if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
         {
