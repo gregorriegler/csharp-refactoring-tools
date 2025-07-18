@@ -41,12 +41,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return DetermineVoidReturnType();
         }
 
-        if (returns.FirstOrDefault() is { } localReturnSymbol)
-        {
-            return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
-        }
-
-        throw new InvalidOperationException("Unsupported return symbol type.");
+        return DetermineLocalReturnType(returns);
     }
 
     private TypeSyntax DetermineVoidReturnType()
@@ -61,6 +56,16 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         return typeInfo.Type != null
             ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
             : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+    }
+
+    private TypeSyntax DetermineLocalReturnType(IReadOnlyList<ILocalSymbol> returns)
+    {
+        if (returns.FirstOrDefault() is { } localReturnSymbol)
+        {
+            return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
+        }
+
+        throw new InvalidOperationException("Unsupported return symbol type.");
     }
 
     protected override BlockSyntax CreateMethodBody()
