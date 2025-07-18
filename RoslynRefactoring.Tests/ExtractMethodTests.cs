@@ -196,6 +196,26 @@ public class Calculator
         await VerifyExtract(code, CodeSelection.Parse("6:0-8:33"), "PrintSum");
     }
 
+    [Test]
+    public async Task CanExtractSingleReturnValueCalculation()
+    {
+        const string code = @"
+public class Calculator
+{
+    public int CalculateSum(int[] items)
+    {
+        var total = 0;
+        for (int i = 0; i < items.Length; i++)
+        {
+            total += items[i];
+        }
+        return total;
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-10:21"), "ComputeTotal");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

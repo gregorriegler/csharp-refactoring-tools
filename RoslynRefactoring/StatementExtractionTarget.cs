@@ -87,9 +87,21 @@ public sealed class StatementExtractionTarget(
     {
         var dataFlow = AnalyzeDataFlow();
         return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
-            .OfType<ILocalSymbol>()
+            .Where(s => s is ILocalSymbol or IParameterSymbol)
+            .Where(s => s is not IFieldSymbol)
+            .Where(s => s.Name != "this")
             .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
-                .WithType(SyntaxFactory.ParseTypeName(s.Type.ToDisplayString()))).ToList();
+                .WithType(SyntaxFactory.ParseTypeName(GetSymbolType(s).ToDisplayString()))).ToList();
+    }
+
+    private static ITypeSymbol GetSymbolType(ISymbol symbol)
+    {
+        return symbol switch
+        {
+            ILocalSymbol local => local.Type,
+            IParameterSymbol parameter => parameter.Type,
+            _ => throw new InvalidOperationException($"Unsupported symbol type: {symbol.GetType()}")
+        };
     }
 
     public override SyntaxNode CreateReplacementNode(string methodName)
