@@ -166,20 +166,18 @@ public class Calculator
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
-        var originalFormatted = Formatter.Format((await document.GetSyntaxRootAsync())!, new AdhocWorkspace());
 
         var sourceText = await document.GetTextAsync();
         var lines = sourceText.Lines;
-        var startLine = lines[codeSelection.Start.Line - 1];
-        var endLine = lines[codeSelection.End.Line - 1];
-        var startPosition = startLine.Start + codeSelection.Start.Column;
-        var endPosition = endLine.Start + codeSelection.End.Column;
-        var selectedSpan = sourceText.GetSubText(new Microsoft.CodeAnalysis.Text.TextSpan(startPosition, endPosition - startPosition));
+        var startPosition = lines[codeSelection.Start.Line - 1].Start + codeSelection.Start.Column;
+        var endPosition = lines[codeSelection.End.Line - 1].Start + codeSelection.End.Column;
 
         var extractMethod = new ExtractMethod(codeSelection, newMethodName);
         var updatedDocument = await extractMethod.PerformAsync(document);
-        var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
 
+        var selectedSpan = sourceText.GetSubText(new Microsoft.CodeAnalysis.Text.TextSpan(startPosition, endPosition - startPosition));
+        var originalFormatted = Formatter.Format((await document.GetSyntaxRootAsync())!, new AdhocWorkspace());
+        var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
         var output = $@"## Original
 
 ```csharp
