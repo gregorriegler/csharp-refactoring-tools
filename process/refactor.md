@@ -12,7 +12,7 @@ Move called functions below their calling functions
 
 
 To increase Cohesion:
-- Move variable declarations as close as possible to where they are used
+- Move variable declarations closer to where they are used, this does not mean to inline
 
 To Reduce Coupling:
 - Avoid booleans as arguments.
