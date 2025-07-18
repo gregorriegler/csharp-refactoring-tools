@@ -94,8 +94,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     protected override List<ParameterSyntax> GetParameters()
     {
-        var dataFlow = AnalyzeDataFlow();
-        return dataFlow.ReadInside.Except(dataFlow.WrittenInside)
+        return extractedCodeDataFlow.ReadInside.Except(extractedCodeDataFlow.WrittenInside)
             .Where(s => s is ILocalSymbol or IParameterSymbol)
             .Where(s => s is not IFieldSymbol)
             .Where(s => s.Name != "this")
