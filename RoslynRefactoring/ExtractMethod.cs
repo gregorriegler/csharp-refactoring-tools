@@ -34,7 +34,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var model = await document.GetSemanticModelAsync();
         if (model == null)
             throw new InvalidOperationException("SemanticModel is null.");
-
         var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block, model);
         var replacementNode = extractionTarget.CreateReplacementNode(newMethodName);
         extractionTarget.ReplaceInEditor(editor, replacementNode);
