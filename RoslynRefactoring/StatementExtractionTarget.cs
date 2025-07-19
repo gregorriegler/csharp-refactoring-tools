@@ -99,8 +99,56 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             .Where(s => s is ILocalSymbol or IParameterSymbol)
             .Where(s => s is not IFieldSymbol)
             .Where(s => s.Name != "this")
-            .Select(s => SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
-                .WithType(SyntaxFactory.ParseTypeName(GetSymbolType(s).ToDisplayString()))).ToList();
+            .Select(s => {
+                var symbolType = GetSymbolType(s);
+                var typeDisplayString = symbolType.ToDisplayString();
+
+                // Handle foreach variables that have 'var' type
+                if (typeDisplayString == "var" && s is ILocalSymbol localSymbol)
+                {
+                    typeDisplayString = ResolveActualTypeForForeachVariable(localSymbol);
+                }
+
+                return SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
+                    .WithType(SyntaxFactory.ParseTypeName(typeDisplayString));
+            }).ToList();
+    }
+
+    private string ResolveActualTypeForForeachVariable(ILocalSymbol localSymbol)
+    {
+        // Look in the parent of the containing block to find the foreach statement
+        var methodBlock = containingBlock.Parent?.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
+        if (methodBlock == null)
+        {
+            return "var";
+        }
+
+        var allForeachStatements = methodBlock
+            .DescendantNodesAndSelf()
+            .OfType<ForEachStatementSyntax>()
+            .ToList();
+
+        // Find the foreach statement that declares this variable
+        var foreachStatement = allForeachStatements
+            .FirstOrDefault(fs => fs.Identifier.Text == localSymbol.Name);
+
+        if (foreachStatement != null)
+        {
+            // Get the type info of the collection being iterated
+            var collectionTypeInfo = semanticModel.GetTypeInfo(foreachStatement.Expression);
+
+            if (collectionTypeInfo.Type != null)
+            {
+                // For IEnumerable<T>, get the T
+                if (collectionTypeInfo.Type is INamedTypeSymbol namedType &&
+                    namedType.TypeArguments.Length > 0)
+                {
+                    return namedType.TypeArguments[0].ToDisplayString();
+                }
+            }
+        }
+
+        return "var"; // fallback
     }
 
     private static ITypeSymbol GetSymbolType(ISymbol symbol)

@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -19,8 +19,8 @@ Examples (ordered by simplicity):
 - [x] Extract LINQ method chain spanning multiple lines
 - [x] Extract if-else conditional logic into separate method
 
-### Loop Body Extraction - DRAFT
-Extract the body of a simple loop into a method.
+### Loop Body Extraction - REFINED
+- [x] Extract the body of a simple loop into a method.
 ```csharp
 foreach (var item in items)
 {

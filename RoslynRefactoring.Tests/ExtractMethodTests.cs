@@ -275,6 +275,33 @@ public class User
         await VerifyExtract(code, CodeSelection.Parse("6:0-14:10"), "SetVotingStatus");
     }
 
+    [Test]
+    public async Task CanExtractLoopBody()
+    {
+        const string code = @"
+public class ItemProcessor
+{
+    public void ProcessItems(List<Item> items, List<string> results)
+    {
+        foreach (var item in items)
+        {
+            item.Process();
+            item.Validate();
+            results.Add(item.GetResult());
+        }
+    }
+}
+
+public class Item
+{
+    public void Process() { }
+    public void Validate() { }
+    public string GetResult() => ""result"";
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("8:0-10:42"), "ProcessSingleItem");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);
