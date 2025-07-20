@@ -28,6 +28,18 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     protected override TypeSyntax DetermineReturnType()
     {
+        var baseReturnType = GetBaseReturnType();
+
+        if (ContainsAwaitExpressions())
+        {
+            return WrapInTaskType(baseReturnType);
+        }
+
+        return baseReturnType;
+    }
+
+    private TypeSyntax GetBaseReturnType()
+    {
         if (returnBehavior.RequiresReturnStatement)
         {
             return (containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault())?.ReturnType ??
@@ -44,30 +56,111 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         return DetermineLocalReturnType(returns);
     }
 
+    private bool ContainsAwaitExpressions()
+    {
+        return selectedStatements.Any(stmt =>
+            stmt.DescendantNodesAndSelf().OfType<AwaitExpressionSyntax>().Any());
+    }
+
+    private TypeSyntax WrapInTaskType(TypeSyntax baseType)
+    {
+        if (baseType.IsKind(SyntaxKind.PredefinedType) &&
+            ((PredefinedTypeSyntax)baseType).Keyword.IsKind(SyntaxKind.VoidKeyword))
+        {
+            return SyntaxFactory.ParseTypeName("Task");
+        }
+
+        return SyntaxFactory.GenericName("Task")
+            .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
+                SyntaxFactory.SingletonSeparatedList(baseType)));
+    }
+
     private TypeSyntax DetermineVoidReturnType()
     {
-        if (selectedStatements.Count != 1 ||
-            selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+        var lastStatement = selectedStatements.Last();
+        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
+        {
+            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
+            if (variable?.Initializer?.Value != null)
+            {
+                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                    }
 
-        var variable = localDecl.Declaration.Variables.FirstOrDefault();
-        if (variable?.Initializer?.Value == null)
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+                    // For async methods with error types, default to string
+                    return SyntaxFactory.ParseTypeName("string");
+                }
+                else
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
+                    }
+                }
+            }
 
-        var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-        return typeInfo.Type != null
-            ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
-            : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            var declaredType = lastLocalDecl.Declaration.Type;
+            if (!declaredType.IsVar)
+            {
+                return declaredType;
+            }
+        }
+
+        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
     }
 
     private TypeSyntax DetermineLocalReturnType(IReadOnlyList<ILocalSymbol> returns)
     {
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
-            return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
+            if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
+            {
+                return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
+            }
+
+            var typeFromDeclaration = InferTypeFromVariableDeclaration(localReturnSymbol.Name);
+            return SyntaxFactory.ParseTypeName(typeFromDeclaration);
         }
 
         throw new InvalidOperationException("Unsupported return symbol type.");
+    }
+
+    private string InferTypeFromVariableDeclaration(string variableName)
+    {
+        var lastStatement = selectedStatements.Last();
+        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
+        {
+            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
+            if (variable?.Initializer?.Value != null)
+            {
+                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return typeInfo.Type.ToDisplayString();
+                    }
+                    // For async methods with error types, default to string
+                    return "string";
+                }
+                else
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return typeInfo.Type.ToDisplayString();
+                    }
+                }
+            }
+        }
+
+        // If we can't determine the type, fall back to the symbol type even if it's an error
+        throw new InvalidOperationException("Could not determine variable type");
     }
 
     protected override BlockSyntax CreateMethodBody()
@@ -101,14 +194,15 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             }
         }
 
-        if (selectedStatements.Count != 1 ||
-            selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl) return newMethodBody;
-
-        var variable = localDecl.Declaration.Variables.FirstOrDefault();
-        if (variable != null)
+        var lastStatement = selectedStatements.Last();
+        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
         {
-            return newMethodBody.AddStatements(
-                SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
+            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
+            if (variable != null)
+            {
+                return newMethodBody.AddStatements(
+                    SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
+            }
         }
 
         return newMethodBody;
@@ -199,20 +293,23 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         if (returnBehavior.RequiresReturnStatement)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            return SyntaxFactory.ReturnStatement(methodCall);
+            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            return SyntaxFactory.ReturnStatement(awaitedCall);
         }
 
         var returns = extractedCodeDataFlow.GetReturns();
         if (returns.Count == 0)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            return GetCallStatement(methodCall);
+            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            return GetCallStatement(awaitedCall);
         }
 
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            return CreateLocalReturnStatement(methodCall, localReturnSymbol);
+            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            return CreateLocalReturnStatement(awaitedCall, localReturnSymbol);
         }
 
         throw new InvalidOperationException("Unsupported return symbol type.");
@@ -226,29 +323,26 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     }
 
 
-    private StatementSyntax GetCallStatement(InvocationExpressionSyntax methodCall)
+    private StatementSyntax GetCallStatement(ExpressionSyntax methodCall)
     {
-        if (selectedStatements.Count != 1 ||
-            selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
+        var lastStatement = selectedStatements.Last();
+        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
         {
-            return SyntaxFactory.ExpressionStatement(methodCall);
+            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
+            if (variable != null)
+            {
+                return SyntaxFactory.LocalDeclarationStatement(
+                    SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
+                        .WithVariables(SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
+                                .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+            }
         }
 
-        var variable = localDecl.Declaration.Variables.FirstOrDefault();
-        if (variable == null)
-        {
-            return SyntaxFactory.ExpressionStatement(methodCall);
-        }
-
-        var variableType = localDecl.Declaration.Type;
-        return SyntaxFactory.LocalDeclarationStatement(
-            SyntaxFactory.VariableDeclaration(variableType)
-                .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
-                        .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+        return SyntaxFactory.ExpressionStatement(methodCall);
     }
 
-    private StatementSyntax CreateLocalReturnStatement(InvocationExpressionSyntax methodCall,
+    private StatementSyntax CreateLocalReturnStatement(ExpressionSyntax methodCall,
         ILocalSymbol localReturnSymbol)
     {
         if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
@@ -256,11 +350,48 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ReturnStatement(methodCall);
         }
 
+        var typeToUse = DetermineVariableType(localReturnSymbol);
+
         return SyntaxFactory.LocalDeclarationStatement(
-            SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString()))
+            SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(typeToUse))
                 .WithVariables(SyntaxFactory.SingletonSeparatedList(
                     SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(localReturnSymbol.Name))
                         .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
+    }
+
+    private string DetermineVariableType(ILocalSymbol localReturnSymbol)
+    {
+        if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
+        {
+            return localReturnSymbol.Type.ToDisplayString();
+        }
+
+        var lastStatement = selectedStatements.Last();
+        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
+        {
+            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
+            if (variable?.Initializer?.Value != null)
+            {
+                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return typeInfo.Type.ToDisplayString();
+                    }
+                }
+                else
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
+                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    {
+                        return typeInfo.Type.ToDisplayString();
+                    }
+                }
+            }
+        }
+
+        return "var";
     }
 
     public override SyntaxNode GetInsertionPoint()
@@ -272,5 +403,10 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         return selectedStatements.Last();
+    }
+
+    protected override bool IsAsyncMethod()
+    {
+        return ContainsAwaitExpressions();
     }
 }

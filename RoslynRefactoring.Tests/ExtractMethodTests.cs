@@ -333,6 +333,28 @@ public class FileProcessor
         await VerifyExtract(code, CodeSelection.Parse("6:0-17:21"), "ProcessFileWithErrorHandling");
     }
 
+    [Test]
+    public async Task CanExtractAsyncMethod()
+    {
+        const string code = @"
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+public class ApiClient
+{
+    public async Task<T> GetDataAsync<T>(string url)
+    {
+        var client = new HttpClient();
+        var response = await client.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<T>(content);
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("10:0-12:56"), "FetchAndDeserialize");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

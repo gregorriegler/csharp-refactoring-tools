@@ -129,11 +129,23 @@ public abstract class ExtractionTarget
         var methodBody = CreateMethodBody();
         var returnType = DetermineReturnType();
         var parameters = GetParameters();
+        var modifiers = new List<SyntaxToken> { SyntaxFactory.Token(SyntaxKind.PrivateKeyword) };
+
+        if (IsAsyncMethod())
+        {
+            modifiers.Add(SyntaxFactory.Token(SyntaxKind.AsyncKeyword));
+        }
+
         var methodDeclaration = SyntaxFactory.MethodDeclaration(returnType, methodName)
-            .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword))
+            .AddModifiers(modifiers.ToArray())
             .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
             .WithBody(methodBody);
         return methodDeclaration;
+    }
+
+    protected virtual bool IsAsyncMethod()
+    {
+        return false;
     }
 
     protected abstract List<ParameterSyntax> GetParameters();
