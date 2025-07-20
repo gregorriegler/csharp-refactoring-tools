@@ -48,7 +48,7 @@ public class DataProcessor
         var result = ProcessActiveNames(data);
     }
 
-    private? ProcessActiveNames(IEnumerable<DataItem> data)
+    private List<string> ProcessActiveNames(IEnumerable<DataItem> data)
     {
         var result = data.Where(x => x.IsActive).Select(x => x.Name).OrderBy(x => x).ToList();
         return result;

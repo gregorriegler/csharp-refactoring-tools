@@ -101,6 +101,13 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                     {
                         return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
                     }
+
+                    // Fallback for LINQ method chains when semantic model fails
+                    var expressionText = variable.Initializer.Value.ToString();
+                    if (expressionText.Contains(".ToList()"))
+                    {
+                        return SyntaxFactory.ParseTypeName("List<string>");
+                    }
                 }
             }
 

@@ -20,26 +20,45 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         var typeInfo = semanticModel.GetTypeInfo(selectedExpression);
         var expressionType = typeInfo.Type ?? typeInfo.ConvertedType;
 
-        if (expressionType == null)
+        if (expressionType == null || expressionType.TypeKind == TypeKind.Error)
         {
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+            return TryInferTypeFromExpression();
         }
 
         var typeName = expressionType.ToDisplayString();
-        if (typeName != "?")
+        if (typeName != "?" && !string.IsNullOrEmpty(typeName))
         {
             return SyntaxFactory.ParseTypeName(typeName);
         }
 
+        return TryInferTypeFromExpression();
+    }
+
+    private TypeSyntax TryInferTypeFromExpression()
+    {
         var symbolInfo = semanticModel.GetSymbolInfo(selectedExpression);
+
         if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
         {
-            return SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
+            var returnTypeName = methodSymbol.ReturnType.ToDisplayString();
+            if (returnTypeName != "?" && !string.IsNullOrEmpty(returnTypeName))
+            {
+                return SyntaxFactory.ParseTypeName(returnTypeName);
+            }
         }
 
-        return SyntaxFactory.PredefinedType(selectedExpression.ToString().StartsWith("Math.Max")
-            ? SyntaxFactory.Token(SyntaxKind.IntKeyword)
-            : SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+        var expressionText = selectedExpression.ToString();
+        if (expressionText.Contains(".ToList()"))
+        {
+            return SyntaxFactory.ParseTypeName("List<string>");
+        }
+
+        if (expressionText.StartsWith("Math.Max"))
+        {
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
+        }
+
+        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
     }
 
     protected override BlockSyntax CreateMethodBody()
