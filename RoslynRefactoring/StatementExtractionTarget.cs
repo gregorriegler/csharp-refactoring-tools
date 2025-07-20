@@ -11,6 +11,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly BlockSyntax containingBlock;
     private readonly ReturnBehavior returnBehavior;
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
+    private readonly AwaitExpressionTypeInferenceStrategy awaitTypeInferenceStrategy;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -24,6 +25,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         extractedCodeDataFlow = new ExtractedCodeDataFlow(
             semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
             ?? throw new InvalidOperationException("DataFlow is null."));
+        awaitTypeInferenceStrategy = new AwaitExpressionTypeInferenceStrategy();
     }
 
     protected override TypeSyntax DetermineReturnType()
@@ -83,16 +85,10 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
             if (variable?.Initializer?.Value != null)
             {
-                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
                 {
-                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                    {
-                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                    }
-
-                    // For async methods with error types, default to string
-                    return SyntaxFactory.ParseTypeName("string");
+                    var inferredType = awaitTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                    return SyntaxFactory.ParseTypeName(inferredType);
                 }
                 else
                 {
@@ -160,15 +156,9 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 var variable = localDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
                 if (variable?.Initializer?.Value != null)
                 {
-                    if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                    if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
                     {
-                        var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
-                        if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                        {
-                            return typeInfo.Type.ToDisplayString();
-                        }
-                        // For async methods with error types, default to string
-                        return "string";
+                        return awaitTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
                     }
                     else
                     {
@@ -408,31 +398,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
         {
             return localReturnSymbol.Type.ToDisplayString();
-        }
-
-        var lastStatement = selectedStatements.Last();
-        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
-        {
-            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
-            if (variable?.Initializer?.Value != null)
-            {
-                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
-                {
-                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                    {
-                        return typeInfo.Type.ToDisplayString();
-                    }
-                }
-                else
-                {
-                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                    {
-                        return typeInfo.Type.ToDisplayString();
-                    }
-                }
-            }
         }
 
         return "var";
