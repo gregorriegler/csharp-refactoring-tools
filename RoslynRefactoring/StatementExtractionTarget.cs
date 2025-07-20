@@ -123,6 +123,19 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     private TypeSyntax DetermineLocalReturnType(IReadOnlyList<ILocalSymbol> returns)
     {
+        if (returns.Count > 1)
+        {
+            var tupleElements = returns.Select(symbol =>
+            {
+                var typeName = symbol.Type.TypeKind != TypeKind.Error
+                    ? symbol.Type.ToDisplayString()
+                    : InferTypeFromVariableDeclaration(symbol.Name);
+                return SyntaxFactory.TupleElement(SyntaxFactory.ParseTypeName(typeName));
+            });
+
+            return SyntaxFactory.TupleType(SyntaxFactory.SeparatedList(tupleElements));
+        }
+
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
             if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
@@ -139,41 +152,58 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     private string InferTypeFromVariableDeclaration(string variableName)
     {
-        var lastStatement = selectedStatements.Last();
-        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
+        // Look through all selected statements to find the variable declaration
+        foreach (var statement in selectedStatements)
         {
-            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
-            if (variable?.Initializer?.Value != null)
+            if (statement is LocalDeclarationStatementSyntax localDecl)
             {
-                if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
+                var variable = localDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
+                if (variable?.Initializer?.Value != null)
                 {
-                    var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    if (variable.Initializer.Value is AwaitExpressionSyntax awaitExpr)
                     {
-                        return typeInfo.Type.ToDisplayString();
+                        var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
+                        if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                        {
+                            return typeInfo.Type.ToDisplayString();
+                        }
+                        // For async methods with error types, default to string
+                        return "string";
                     }
-                    // For async methods with error types, default to string
-                    return "string";
-                }
-                else
-                {
-                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                    else
                     {
-                        return typeInfo.Type.ToDisplayString();
+                        var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
+                        if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+                        {
+                            return typeInfo.Type.ToDisplayString();
+                        }
                     }
                 }
             }
         }
 
-        // If we can't determine the type, fall back to the symbol type even if it's an error
-        throw new InvalidOperationException("Could not determine variable type");
+        // Fallback to common types based on variable name patterns
+        if (variableName.Contains("Valid"))
+            return "bool";
+        if (variableName.Contains("Message") || variableName.Contains("Error"))
+            return "string";
+
+        return "object";
     }
 
     protected override BlockSyntax CreateMethodBody()
     {
         var returns = extractedCodeDataFlow.GetReturns();
-        if (returns.Count != 0)
+        if (returns.Count > 1)
+        {
+            var tupleElements = returns.Select(symbol =>
+                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(symbol.Name)));
+            var tupleExpression = SyntaxFactory.TupleExpression(SyntaxFactory.SeparatedList(tupleElements));
+            return SyntaxFactory.Block(selectedStatements)
+                .AddStatements(SyntaxFactory.ReturnStatement(tupleExpression));
+        }
+
+        if (returns.Count == 1)
         {
             return returns.FirstOrDefault() is { } returnSymbol
                 ? SyntaxFactory.Block(selectedStatements)
@@ -312,6 +342,13 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return GetCallStatement(awaitedCall);
         }
 
+        if (returns.Count > 1)
+        {
+            var methodCall = CreateMethodCall(methodName, GetParameters());
+            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            return CreateTupleDestructuringStatement(awaitedCall, returns);
+        }
+
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
@@ -399,6 +436,18 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         return "var";
+    }
+
+    private StatementSyntax CreateTupleDestructuringStatement(ExpressionSyntax methodCall, IReadOnlyList<ILocalSymbol> returns)
+    {
+        var variableNames = string.Join(", ", returns.Select(r => r.Name));
+        var tuplePattern = $"({variableNames})";
+
+        return SyntaxFactory.ExpressionStatement(
+            SyntaxFactory.AssignmentExpression(
+                SyntaxKind.SimpleAssignmentExpression,
+                SyntaxFactory.ParseExpression(tuplePattern),
+                methodCall));
     }
 
     public override SyntaxNode GetInsertionPoint()

@@ -355,6 +355,28 @@ public class ApiClient
         await VerifyExtract(code, CodeSelection.Parse("10:0-12:56"), "FetchAndDeserialize");
     }
 
+    [Test]
+    public async Task CanExtractMultipleReturnValuesViaTuple()
+    {
+        const string code = @"
+public class ValidationProcessor
+{
+    public (bool, string, object) ProcessInput(string input)
+    {
+        var isValid = ValidateInput(input);
+        var errorMessage = GetValidationError(input);
+        var processedValue = ProcessInput(input);
+        return (isValid, errorMessage, processedValue);
+    }
+
+    private bool ValidateInput(string input) => !string.IsNullOrEmpty(input);
+    private string GetValidationError(string input) => string.IsNullOrEmpty(input) ? ""Invalid input"" : """";
+    private object ProcessInput(string input) => input?.ToUpper();
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-8:54"), "ValidateAndProcess");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

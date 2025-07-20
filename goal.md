@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -58,8 +58,8 @@ return JsonSerializer.Deserialize<T>(content);
 // Extract: HTTP request and deserialization logic
 ```
 
-### Multiple Return Values via Tuple - DRAFT
-Extract code that needs to return multiple values using tuples.
+### Multiple Return Values via Tuple - REFINED
+- [x] Extract code that needs to return multiple values using tuples.
 ```csharp
 var isValid = ValidateInput(input);
 var errorMessage = GetValidationError(input);
