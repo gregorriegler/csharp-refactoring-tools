@@ -130,7 +130,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     private string InferTypeFromVariableDeclaration(string variableName)
     {
-        // Look through all selected statements to find the variable declaration
         foreach (var statement in selectedStatements)
         {
             if (statement is LocalDeclarationStatementSyntax localDecl)
@@ -142,12 +141,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 }
             }
         }
-
-        // Fallback to common types based on variable name patterns
-        if (variableName.Contains("Valid"))
-            return "bool";
-        if (variableName.Contains("Message") || variableName.Contains("Error"))
-            return "string";
 
         return "object";
     }
