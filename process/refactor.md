@@ -4,11 +4,11 @@ STARTER_SYMBOL=🧹
 
 The goal is to identify a small step towards an improvement in the design. 
 Aim for better maintainability but avoid overengineering. 
+Move called functions below their calling functions.
 Favor polymorphism over repeated conditions.
 Favor value objects over tuples and other primitive data types and data structures.
 Favor tell don't ask over properties.
 Avoid interfaces for stable dependencies.
-Move called functions below their calling functions.
 
 To increase Cohesion:
 - Move variable declarations as close as possible to their first use — ideally just one line above.
