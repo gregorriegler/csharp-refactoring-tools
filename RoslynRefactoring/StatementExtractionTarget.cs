@@ -120,19 +120,22 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             .Where(s => s is ILocalSymbol or IParameterSymbol)
             .Where(s => s is not IFieldSymbol)
             .Where(s => s.Name != "this")
-            .Select(s => {
-                var symbolType = GetSymbolType(s);
-                var typeDisplayString = symbolType.ToDisplayString();
+            .Select(CreateParameterFromSymbol)
+            .ToList();
+    }
 
-                // Handle foreach variables that have 'var' type
-                if (typeDisplayString == "var" && s is ILocalSymbol localSymbol)
-                {
-                    typeDisplayString = ResolveActualTypeForForeachVariable(localSymbol);
-                }
+    private ParameterSyntax CreateParameterFromSymbol(ISymbol symbol)
+    {
+        var symbolType = GetSymbolType(symbol);
+        var typeDisplayString = symbolType.ToDisplayString();
 
-                return SyntaxFactory.Parameter(SyntaxFactory.Identifier(s.Name))
-                    .WithType(SyntaxFactory.ParseTypeName(typeDisplayString));
-            }).ToList();
+        if (typeDisplayString == "var" && symbol is ILocalSymbol localSymbol)
+        {
+            typeDisplayString = ResolveActualTypeForForeachVariable(localSymbol);
+        }
+
+        return SyntaxFactory.Parameter(SyntaxFactory.Identifier(symbol.Name))
+            .WithType(SyntaxFactory.ParseTypeName(typeDisplayString));
     }
 
     private string ResolveActualTypeForForeachVariable(ILocalSymbol localSymbol)
