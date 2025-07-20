@@ -11,7 +11,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly BlockSyntax containingBlock;
     private readonly ReturnBehavior returnBehavior;
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
-    private readonly TypeInferenceService typeInferenceService;
+    private readonly TypeInferrer typeInferrer;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -25,7 +25,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         extractedCodeDataFlow = new ExtractedCodeDataFlow(
             semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
             ?? throw new InvalidOperationException("DataFlow is null."));
-        typeInferenceService = new TypeInferenceService();
+        typeInferrer = new TypeInferrer();
     }
 
     protected override TypeSyntax DetermineReturnType()
@@ -87,7 +87,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return !lastLocalDecl.Declaration.Type.IsVar
                 ? lastLocalDecl.Declaration.Type
                 : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
-        var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variable.Identifier.Text);
+        var inferredType = typeInferrer.InferType(variable.Initializer.Value, semanticModel);
         return SyntaxFactory.ParseTypeName(inferredType);
 
     }
@@ -130,7 +130,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 var variable = localDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
                 if (variable?.Initializer?.Value != null)
                 {
-                    return typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variableName);
+                    return typeInferrer.InferType(variable.Initializer.Value, semanticModel);
                 }
             }
         }
