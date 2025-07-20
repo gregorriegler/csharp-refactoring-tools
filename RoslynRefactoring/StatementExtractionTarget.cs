@@ -85,7 +85,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
             if (variable?.Initializer?.Value != null)
             {
-                var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel);
+                var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variable.Identifier.Text);
                 return SyntaxFactory.ParseTypeName(inferredType);
             }
 
