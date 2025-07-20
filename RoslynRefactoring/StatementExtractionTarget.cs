@@ -89,12 +89,14 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             {
                 if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
                 {
-                    var inferredType = awaitTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                    var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel);
+                    var inferredType = awaitTypeInferenceStrategy.InferType(context);
                     return SyntaxFactory.ParseTypeName(inferredType);
                 }
                 else
                 {
-                    var inferredType = regularTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                    var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel);
+                    var inferredType = regularTypeInferenceStrategy.InferType(context);
                     return SyntaxFactory.ParseTypeName(inferredType);
                 }
             }
@@ -150,11 +152,13 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 {
                     if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
                     {
-                        return awaitTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                        var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel, variableName);
+                        return awaitTypeInferenceStrategy.InferType(context);
                     }
                     else
                     {
-                        return regularTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                        var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel, variableName);
+                        return regularTypeInferenceStrategy.InferType(context);
                     }
                 }
             }

@@ -10,14 +10,14 @@ public sealed class AwaitExpressionTypeInferenceStrategy : AbstractTypeInference
         return expression is AwaitExpressionSyntax;
     }
 
-    public override string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public override string InferType(TypeInferenceContext context)
     {
-        if (expression is not AwaitExpressionSyntax awaitExpr)
+        if (context.Expression is not AwaitExpressionSyntax awaitExpr)
         {
-            throw new ArgumentException("Expression must be AwaitExpressionSyntax", nameof(expression));
+            throw new ArgumentException("Expression must be AwaitExpressionSyntax", nameof(context));
         }
 
-        var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
+        var typeInfo = context.SemanticModel.GetTypeInfo(awaitExpr);
         return GetTypeDisplayString(typeInfo.Type);
     }
 }

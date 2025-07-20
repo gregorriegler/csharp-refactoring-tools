@@ -5,6 +5,6 @@ namespace RoslynRefactoring;
 
 public interface ITypeInferenceStrategy
 {
-    string InferType(ExpressionSyntax expression, SemanticModel semanticModel);
+    string InferType(TypeInferenceContext context);
     bool CanHandle(ExpressionSyntax expression);
 }

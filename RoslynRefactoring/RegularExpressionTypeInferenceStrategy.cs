@@ -10,15 +10,15 @@ public sealed class RegularExpressionTypeInferenceStrategy : AbstractTypeInferen
         return expression is not AwaitExpressionSyntax;
     }
 
-    public override string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public override string InferType(TypeInferenceContext context)
     {
-        var typeInfo = semanticModel.GetTypeInfo(expression);
+        var typeInfo = context.SemanticModel.GetTypeInfo(context.Expression);
         if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
         {
             return typeInfo.Type.ToDisplayString();
         }
 
-        var expressionText = expression.ToString();
+        var expressionText = context.Expression.ToString();
         if (expressionText.Contains(".ToList()"))
         {
             return "List<string>";

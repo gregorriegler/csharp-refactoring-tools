@@ -5,7 +5,7 @@ namespace RoslynRefactoring;
 
 public abstract class AbstractTypeInferenceStrategy : ITypeInferenceStrategy
 {
-    public abstract string InferType(ExpressionSyntax expression, SemanticModel semanticModel);
+    public abstract string InferType(TypeInferenceContext context);
     public abstract bool CanHandle(ExpressionSyntax expression);
 
     protected string GetTypeDisplayString(ITypeSymbol? type)
