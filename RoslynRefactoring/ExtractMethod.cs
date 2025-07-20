@@ -25,8 +25,8 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         if (root == null)
             throw new InvalidOperationException("SyntaxRoot is null.");
         var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
-        var selectedNode = root.FindNode(span);
 
+        var selectedNode = root.FindNode(span);
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
         if (block == null)
             throw new InvalidOperationException("Selected statements are not inside a block.");
