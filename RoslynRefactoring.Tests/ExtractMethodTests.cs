@@ -302,6 +302,37 @@ public class Item
         await VerifyExtract(code, CodeSelection.Parse("8:0-10:42"), "ProcessSingleItem");
     }
 
+    [Test]
+    public async Task CanExtractExceptionHandling()
+    {
+        const string code = @"
+public class FileProcessor
+{
+    public bool ProcessFile(string filename, string outputFile)
+    {
+        try
+        {
+            var data = LoadData(filename);
+            var processed = ProcessData(data);
+            SaveData(processed, outputFile);
+        }
+        catch (FileNotFoundException ex)
+        {
+            LogError($""File not found: {ex.Message}"");
+            return false;
+        }
+        return true;
+    }
+
+    private string LoadData(string filename) => throw new NotImplementedException();
+    private string ProcessData(string data) => throw new NotImplementedException();
+    private void SaveData(string data, string filename) => throw new NotImplementedException();
+    private void LogError(string message) => throw new NotImplementedException();
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-17:21"), "ProcessFileWithErrorHandling");
+    }
+
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
         var document = DocumentTestHelper.CreateDocument(code);

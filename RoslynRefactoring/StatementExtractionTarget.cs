@@ -80,6 +80,25 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         var newMethodBody = SyntaxFactory.Block(selectedStatements);
+
+        if (returnBehavior.RequiresReturnStatement)
+        {
+            var hasReturnStatement = selectedStatements
+                .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
+                .Any();
+
+            if (!hasReturnStatement)
+            {
+                var returnType = DetermineReturnType();
+                if (returnType.IsKind(SyntaxKind.PredefinedType) &&
+                    ((PredefinedTypeSyntax)returnType).Keyword.IsKind(SyntaxKind.BoolKeyword))
+                {
+                    return newMethodBody.AddStatements(
+                        SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)));
+                }
+            }
+        }
+
         if (selectedStatements.Count != 1 ||
             selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl) return newMethodBody;
 

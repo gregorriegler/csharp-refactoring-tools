@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🟢
 
 ## Scenarios
 
@@ -31,8 +31,8 @@ foreach (var item in items)
 // Extract: item processing logic
 ```
 
-### Exception Handling Extraction - DRAFT
-Extract code that includes try-catch blocks.
+### Exception Handling Extraction - REFINED
+- [x] Extract code that includes try-catch blocks.
 ```csharp
 try
 {
