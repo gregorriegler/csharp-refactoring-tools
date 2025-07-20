@@ -229,7 +229,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         var variableType = localDecl.Declaration.Type;
-
         return SyntaxFactory.LocalDeclarationStatement(
             SyntaxFactory.VariableDeclaration(variableType)
                 .WithVariables(SyntaxFactory.SingletonSeparatedList(
