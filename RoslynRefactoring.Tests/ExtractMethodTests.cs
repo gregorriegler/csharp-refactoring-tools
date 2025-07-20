@@ -377,18 +377,25 @@ public class ValidationProcessor
         await VerifyExtract(code, CodeSelection.Parse("6:0-8:54"), "ValidateAndProcess");
     }
 
-    private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
+    private static async Task<(int startPosition, int endPosition)> CalculateSelectionPositions(Document document, CodeSelection codeSelection)
     {
-        var document = DocumentTestHelper.CreateDocument(code);
-
         var sourceText = await document.GetTextAsync();
         var lines = sourceText.Lines;
         var startPosition = lines[codeSelection.Start.Line - 1].Start + codeSelection.Start.Column;
         var endPosition = lines[codeSelection.End.Line - 1].Start + codeSelection.End.Column;
+        return (startPosition, endPosition);
+    }
+
+    private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
+    {
+        var document = DocumentTestHelper.CreateDocument(code);
+
+        var (startPosition, endPosition) = await CalculateSelectionPositions(document, codeSelection);
 
         var extractMethod = new ExtractMethod(codeSelection, newMethodName);
         var updatedDocument = await extractMethod.PerformAsync(document);
 
+        var sourceText = await document.GetTextAsync();
         var selectedSpan = sourceText.GetSubText(new Microsoft.CodeAnalysis.Text.TextSpan(startPosition, endPosition - startPosition));
         var originalFormatted = Formatter.Format((await document.GetSyntaxRootAsync())!, new AdhocWorkspace());
         var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
