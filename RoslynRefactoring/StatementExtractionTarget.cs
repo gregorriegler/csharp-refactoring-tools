@@ -80,23 +80,16 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private TypeSyntax DetermineVoidReturnType()
     {
         var lastStatement = selectedStatements.Last();
-        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
-        {
-            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
-            if (variable?.Initializer?.Value != null)
-            {
-                var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variable.Identifier.Text);
-                return SyntaxFactory.ParseTypeName(inferredType);
-            }
+        if (lastStatement is not LocalDeclarationStatementSyntax lastLocalDecl)
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+        var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
+        if (variable?.Initializer?.Value == null)
+            return !lastLocalDecl.Declaration.Type.IsVar
+                ? lastLocalDecl.Declaration.Type
+                : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+        var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variable.Identifier.Text);
+        return SyntaxFactory.ParseTypeName(inferredType);
 
-            var declaredType = lastLocalDecl.Declaration.Type;
-            if (!declaredType.IsVar)
-            {
-                return declaredType;
-            }
-        }
-
-        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
     }
 
     private TypeSyntax DetermineLocalReturnType(IReadOnlyList<ILocalSymbol> returns)
