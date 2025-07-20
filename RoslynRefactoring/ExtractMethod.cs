@@ -49,12 +49,13 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
     private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)
     {
         var lines = (await document.GetTextAsync()).Lines;
+
+        int GetPos(Cursor cursor) => lines[cursor.Line - 1].Start + cursor.Column - 1;
+
         var span = TextSpan.FromBounds(
             GetPos(selection.Start),
             GetPos(selection.End)
         );
         return span;
-
-        int GetPos(Cursor cursor) => lines[cursor.Line - 1].Start + cursor.Column - 1;
     }
 }
