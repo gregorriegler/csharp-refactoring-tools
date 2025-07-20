@@ -17,6 +17,19 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         return new ExtractMethod(selection, newMethodName);
     }
 
+    private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)
+    {
+        var lines = (await document.GetTextAsync()).Lines;
+
+        int GetPos(Cursor cursor) => lines[cursor.Line - 1].Start + cursor.Column - 1;
+
+        var span = TextSpan.FromBounds(
+            GetPos(selection.Start),
+            GetPos(selection.End)
+        );
+        return span;
+    }
+
     public async Task<Document> PerformAsync(Document document)
     {
         var span = await GetSpan(document, selection);
@@ -44,18 +57,5 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
         Console.WriteLine($"✅ Extracted method '{newMethodName}'");
         return document.WithSyntaxRoot(newRoot);
-    }
-
-    private static async Task<TextSpan> GetSpan(Document document, CodeSelection selection)
-    {
-        var lines = (await document.GetTextAsync()).Lines;
-
-        int GetPos(Cursor cursor) => lines[cursor.Line - 1].Start + cursor.Column - 1;
-
-        var span = TextSpan.FromBounds(
-            GetPos(selection.Start),
-            GetPos(selection.End)
-        );
-        return span;
     }
 }
