@@ -49,9 +49,11 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         if (selectedStatements.Count != 1 ||
             selectedStatements.First() is not LocalDeclarationStatementSyntax localDecl)
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+
         var variable = localDecl.Declaration.Variables.FirstOrDefault();
         if (variable?.Initializer?.Value == null)
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+
         var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
         return typeInfo.Type != null
             ? SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString())
