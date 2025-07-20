@@ -11,8 +11,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly BlockSyntax containingBlock;
     private readonly ReturnBehavior returnBehavior;
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
-    private readonly AwaitExpressionTypeInferenceStrategy awaitTypeInferenceStrategy;
-    private readonly RegularExpressionTypeInferenceStrategy regularTypeInferenceStrategy;
+    private readonly TypeInferenceService typeInferenceService;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -26,8 +25,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         extractedCodeDataFlow = new ExtractedCodeDataFlow(
             semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
             ?? throw new InvalidOperationException("DataFlow is null."));
-        awaitTypeInferenceStrategy = new AwaitExpressionTypeInferenceStrategy();
-        regularTypeInferenceStrategy = new RegularExpressionTypeInferenceStrategy();
+        typeInferenceService = new TypeInferenceService();
     }
 
     protected override TypeSyntax DetermineReturnType()
@@ -87,18 +85,8 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
             if (variable?.Initializer?.Value != null)
             {
-                if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
-                {
-                    var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel);
-                    var inferredType = awaitTypeInferenceStrategy.InferType(context);
-                    return SyntaxFactory.ParseTypeName(inferredType);
-                }
-                else
-                {
-                    var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel);
-                    var inferredType = regularTypeInferenceStrategy.InferType(context);
-                    return SyntaxFactory.ParseTypeName(inferredType);
-                }
+                var inferredType = typeInferenceService.InferType(variable.Initializer.Value, semanticModel);
+                return SyntaxFactory.ParseTypeName(inferredType);
             }
 
             var declaredType = lastLocalDecl.Declaration.Type;
@@ -150,16 +138,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 var variable = localDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
                 if (variable?.Initializer?.Value != null)
                 {
-                    if (awaitTypeInferenceStrategy.CanHandle(variable.Initializer.Value))
-                    {
-                        var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel, variableName);
-                        return awaitTypeInferenceStrategy.InferType(context);
-                    }
-                    else
-                    {
-                        var context = new TypeInferenceContext(variable.Initializer.Value, semanticModel, variableName);
-                        return regularTypeInferenceStrategy.InferType(context);
-                    }
+                    return typeInferenceService.InferType(variable.Initializer.Value, semanticModel, variableName);
                 }
             }
         }
