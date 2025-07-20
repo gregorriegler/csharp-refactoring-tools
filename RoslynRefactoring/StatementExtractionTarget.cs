@@ -12,6 +12,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly ReturnBehavior returnBehavior;
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
     private readonly AwaitExpressionTypeInferenceStrategy awaitTypeInferenceStrategy;
+    private readonly RegularExpressionTypeInferenceStrategy regularTypeInferenceStrategy;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -26,6 +27,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
             ?? throw new InvalidOperationException("DataFlow is null."));
         awaitTypeInferenceStrategy = new AwaitExpressionTypeInferenceStrategy();
+        regularTypeInferenceStrategy = new RegularExpressionTypeInferenceStrategy();
     }
 
     protected override TypeSyntax DetermineReturnType()
@@ -92,18 +94,8 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 }
                 else
                 {
-                    var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-                    if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                    {
-                        return SyntaxFactory.ParseTypeName(typeInfo.Type.ToDisplayString());
-                    }
-
-                    // Fallback for LINQ method chains when semantic model fails
-                    var expressionText = variable.Initializer.Value.ToString();
-                    if (expressionText.Contains(".ToList()"))
-                    {
-                        return SyntaxFactory.ParseTypeName("List<string>");
-                    }
+                    var inferredType = regularTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
+                    return SyntaxFactory.ParseTypeName(inferredType);
                 }
             }
 
@@ -162,11 +154,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                     }
                     else
                     {
-                        var typeInfo = semanticModel.GetTypeInfo(variable.Initializer.Value);
-                        if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
-                        {
-                            return typeInfo.Type.ToDisplayString();
-                        }
+                        return regularTypeInferenceStrategy.InferType(variable.Initializer.Value, semanticModel);
                     }
                 }
             }
