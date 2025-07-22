@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -117,8 +117,8 @@ var result = inferrer.InferType(errorExpression, semanticModel);
 // Should return "object" for error types
 ```
 
-### CodeSelection Validation - DRAFT
-Test CodeSelection.IsInRange with edge cases.
+### CodeSelection Validation - REFINED
+- [x] Test CodeSelection.IsInRange with edge cases.
 ```csharp
 // Test case: Selection beyond file boundaries
 var selection = CodeSelection.Parse("100:1-100:10");
