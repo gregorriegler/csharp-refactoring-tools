@@ -31,18 +31,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             stmt.DescendantNodesAndSelf().OfType<AwaitExpressionSyntax>().Any());
     }
 
-    protected override TypeSyntax DetermineReturnType()
-    {
-        var baseReturnType = GetBaseReturnType();
-
-        if (ContainsAwaitExpressions)
-        {
-            return WrapInTaskType(baseReturnType);
-        }
-
-        return baseReturnType;
-    }
-
     private TypeSyntax GetBaseReturnType()
     {
         if (returnBehavior.RequiresReturnStatement)
@@ -59,6 +47,18 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         }
 
         return DetermineLocalReturnType(returns);
+    }
+
+    protected override TypeSyntax DetermineReturnType()
+    {
+        var baseReturnType = GetBaseReturnType();
+
+        if (ContainsAwaitExpressions)
+        {
+            return WrapInTaskType(baseReturnType);
+        }
+
+        return baseReturnType;
     }
 
     private bool ContainsAwaitExpressions => containsAwaitExpressions;
