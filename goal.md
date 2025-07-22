@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -79,8 +79,8 @@ var y = x + 1;
 // to here - invalid selection
 ```
 
-### Variable Scope Conflicts - DRAFT
-Extracted code would create variable naming conflicts.
+### Variable Scope Conflicts - REFINED
+- [x] Extracted code would create variable naming conflicts.
 ```csharp
 var name = "outer";
 {
