@@ -199,3 +199,71 @@ var inferrer = new TypeInferrer();
 var result = inferrer.InferType(regularExpressionWithErrorType, semanticModel);
 // Should fall back to pattern-based inference
 ```
+
+### CodeSelection Parse Error Handling - DRAFT
+Test CodeSelection.Parse with invalid cursor format.
+```csharp
+// Test case: Cursor.Parse with invalid format
+var cursor = Cursor.Parse("invalid:format:extra");
+// Should throw InvalidOperationException
+
+// Test case: Cursor.Parse with non-numeric values
+var cursor = Cursor.Parse("abc:def");
+// Should throw InvalidOperationException
+```
+
+### CsProject Infrastructure - DRAFT
+Test CsProject file handling edge cases.
+```csharp
+// Test case: CsProject with missing file
+var project = new CsProject("valid.csproj", "missing.cs");
+await project.OpenAndApplyRefactoring(refactoring);
+// Should handle gracefully when file not found
+
+// Test case: CsProject MSBuild registration
+var project = new CsProject("valid.csproj", "existing.cs");
+await project.OpenAndApplyRefactoring(refactoring);
+// Should register MSBuild defaults and apply changes
+```
+
+### InlineMethod Error Paths - DRAFT
+Test InlineMethod with missing method declarations.
+```csharp
+// Test case: InlineMethod with method declaration not found
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithMissingMethod);
+// Should return original document when method declaration not found
+
+// Test case: InlineMethod with null method body
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithAbstractMethod);
+// Should return original document when method has no body
+```
+
+### StatementExtractionTarget Edge Cases - DRAFT
+Test StatementExtractionTarget with complex scenarios.
+```csharp
+// Test case: StatementExtractionTarget with nested blocks
+var target = new StatementExtractionTarget(nestedStatements, block, semanticModel);
+var result = target.CreateReplacementNode("ExtractedMethod");
+// Should handle nested statement extraction
+
+// Test case: StatementExtractionTarget with variable scope analysis
+var target = new StatementExtractionTarget(statementsWithVariables, block, semanticModel);
+var parameters = target.GetParameters();
+// Should identify required parameters from variable usage
+```
+
+### ExpressionExtractionTarget Type Inference - DRAFT
+Test ExpressionExtractionTarget with complex expressions.
+```csharp
+// Test case: ExpressionExtractionTarget with async expressions
+var target = new ExpressionExtractionTarget(awaitExpression, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should handle async return type inference
+
+// Test case: ExpressionExtractionTarget with generic expressions
+var target = new ExpressionExtractionTarget(genericExpression, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should handle generic type inference
+```
