@@ -87,4 +87,50 @@ public sealed class TypeInferrer
 
         return false;
     }
+
+    public string ResolveActualTypeForForeachVariable(ILocalSymbol localSymbol, BlockSyntax containingBlock, SemanticModel semanticModel)
+    {
+        var methodBlock = FindMethodBlock(containingBlock);
+        if (methodBlock == null)
+        {
+            return "var";
+        }
+
+        var foreachStatement = FindForeachStatementForVariable(methodBlock, localSymbol.Name);
+        if (foreachStatement == null)
+        {
+            return "var";
+        }
+
+        return ExtractElementTypeFromCollection(foreachStatement, semanticModel);
+    }
+
+    private BlockSyntax? FindMethodBlock(BlockSyntax containingBlock)
+    {
+        return containingBlock.Parent?.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
+    }
+
+    private ForEachStatementSyntax? FindForeachStatementForVariable(BlockSyntax methodBlock, string variableName)
+    {
+        var allForeachStatements = methodBlock
+            .DescendantNodesAndSelf()
+            .OfType<ForEachStatementSyntax>()
+            .ToList();
+
+        return allForeachStatements
+            .FirstOrDefault(fs => fs.Identifier.Text == variableName);
+    }
+
+    private string ExtractElementTypeFromCollection(ForEachStatementSyntax foreachStatement, SemanticModel semanticModel)
+    {
+        var collectionTypeInfo = semanticModel.GetTypeInfo(foreachStatement.Expression);
+
+        if (collectionTypeInfo.Type is INamedTypeSymbol namedType &&
+            namedType.TypeArguments.Length > 0)
+        {
+            return namedType.TypeArguments[0].ToDisplayString();
+        }
+
+        return "var";
+    }
 }
