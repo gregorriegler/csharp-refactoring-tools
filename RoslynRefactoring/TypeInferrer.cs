@@ -36,6 +36,7 @@ public sealed class TypeInferrer
                 return typeInfo.Type.ToDisplayString();
             }
 
+
             // Check if this is a call to a non-existent method
             if (awaitExpr.Expression.ToString().Contains("NonExistentAsyncMethod"))
             {

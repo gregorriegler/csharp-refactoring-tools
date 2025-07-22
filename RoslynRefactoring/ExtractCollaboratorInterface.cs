@@ -285,7 +285,7 @@ public class ExtractCollaboratorInterface : IRefactoring
 
     private ClassDeclarationSyntax RefactorClass(CollaboratorInfo collaboratorInfo)
     {
-        var rewriter = new CollaboratorRewriter(collaboratorInfo.CollaboratorType, "");
+        var rewriter = new CollaboratorRewriter(collaboratorInfo.CollaboratorType);
         return (ClassDeclarationSyntax)rewriter.Visit(collaboratorInfo.TargetClass);
     }
 
@@ -313,12 +313,10 @@ public class ExtractCollaboratorInterface : IRefactoring
     private class CollaboratorRewriter : CSharpSyntaxRewriter
     {
         private readonly string collaboratorType;
-        private readonly string fieldName;
 
-        public CollaboratorRewriter(string collaboratorType, string fieldName)
+        public CollaboratorRewriter(string collaboratorType)
         {
             this.collaboratorType = collaboratorType;
-            this.fieldName = fieldName;
         }
 
         public override SyntaxNode? VisitFieldDeclaration(FieldDeclarationSyntax node)
