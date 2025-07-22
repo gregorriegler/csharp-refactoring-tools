@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace RoslynRefactoring;
 
@@ -36,9 +37,7 @@ public sealed class TypeInferrer
                 return typeInfo.Type.ToDisplayString();
             }
 
-
-            // Check if this is a call to a non-existent method
-            if (awaitExpr.Expression.ToString().Contains("NonExistentAsyncMethod"))
+            if (IsErrorTypeExpression(awaitExpr.Expression, semanticModel))
             {
                 return ObjectType;
             }
@@ -69,5 +68,23 @@ public sealed class TypeInferrer
         }
 
         return ObjectType;
+    }
+
+    private bool IsErrorTypeExpression(ExpressionSyntax expression, SemanticModel semanticModel)
+    {
+        if (expression is InvocationExpressionSyntax invocation)
+        {
+            var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+            if (symbolInfo.Symbol == null && symbolInfo.CandidateSymbols.IsEmpty)
+            {
+                var diagnostics = semanticModel.GetDiagnostics(invocation.Span);
+                if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
