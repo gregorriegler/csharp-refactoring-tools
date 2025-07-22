@@ -17,6 +17,15 @@ public sealed class TypeInferrer
     private const string StringType = "string";
     private const string ObjectType = "object";
 
+    private static readonly Dictionary<string, string> PatternTypeMapping = new()
+    {
+        { ToListPattern, ListStringType },
+        { ToArrayPattern, StringArrayType },
+        { ToDictionaryPattern, DictionaryType },
+        { SelectPattern, EnumerableType },
+        { WherePattern, EnumerableType }
+    };
+
     public string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         if (expression is AwaitExpressionSyntax awaitExpr)
@@ -47,14 +56,14 @@ public sealed class TypeInferrer
     {
         var expressionText = expression.ToString();
 
-        return expressionText switch
+        foreach (var (pattern, type) in PatternTypeMapping)
         {
-            var text when text.Contains(ToListPattern) => ListStringType,
-            var text when text.Contains(ToArrayPattern) => StringArrayType,
-            var text when text.Contains(ToDictionaryPattern) => DictionaryType,
-            var text when text.Contains(SelectPattern) => EnumerableType,
-            var text when text.Contains(WherePattern) => EnumerableType,
-            _ => ObjectType
-        };
+            if (expressionText.Contains(pattern))
+            {
+                return type;
+            }
+        }
+
+        return ObjectType;
     }
 }
