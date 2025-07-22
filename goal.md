@@ -267,3 +267,197 @@ var target = new ExpressionExtractionTarget(genericExpression, semanticModel);
 var returnType = target.DetermineReturnType();
 // Should handle generic type inference
 ```
+
+### Program.cs Infrastructure Coverage - DRAFT
+Test main program entry points for both analysis and refactoring tools.
+```csharp
+// Test case: RoslynAnalysis with --list-tools argument
+var args = new[] { "--list-tools" };
+// Should output JSON list of available analyses
+
+// Test case: RoslynAnalysis with missing project path
+var args = new[] { "analysis-name" };
+// Should output usage error message
+
+// Test case: RoslynRefactoring with --list-tools argument
+var args = new[] { "--list-tools" };
+// Should output JSON list of available refactorings
+```
+
+### CodeSelection Error Handling - DRAFT
+Test CodeSelection parsing with invalid inputs.
+```csharp
+// Test case: CodeSelection.Parse with wrong format
+var selection = CodeSelection.Parse("1:1:1-2:2");
+// Should throw InvalidOperationException
+
+// Test case: Cursor.Parse with non-numeric parts
+var cursor = Cursor.Parse("abc:def");
+// Should throw InvalidOperationException
+
+// Test case: CodeSelection.Create with invalid line numbers
+var selection = CodeSelection.Create(new Cursor(0, 1), new Cursor(1, 1));
+// Should throw InvalidOperationException for line <= 0
+```
+
+### CsProject File Operations - DRAFT
+Test CsProject with missing files and MSBuild operations.
+```csharp
+// Test case: CsProject with file not found in project
+var project = new CsProject("valid.csproj", "missing.cs");
+await project.OpenAndApplyRefactoring(mockRefactoring);
+// Should handle gracefully and log error message
+
+// Test case: CsProject MSBuild workspace operations
+var project = new CsProject("valid.csproj", "existing.cs");
+await project.OpenAndApplyRefactoring(mockRefactoring);
+// Should successfully apply refactoring and workspace changes
+```
+
+### TypeInferrer Error Type Handling - DRAFT
+Test TypeInferrer with error types and fallback scenarios.
+```csharp
+// Test case: TypeInferrer with await expression error type
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(awaitExpressionWithErrorType, semanticModel);
+// Should return "object" when type inference fails
+
+// Test case: TypeInferrer with error type expression
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(errorTypeExpression, semanticModel);
+// Should fall back to pattern-based type inference
+```
+
+### ExtractCollaboratorInterface Edge Cases - DRAFT
+Test ExtractCollaboratorInterface with null document root.
+```csharp
+// Test case: ExtractCollaboratorInterface with null syntax root
+var extractor = new ExtractCollaboratorInterface(validSelection);
+var result = await extractor.PerformAsync(documentWithNullRoot);
+// Should return original document when syntax root is null
+```
+
+### ExtractionTarget Complex Scenarios - DRAFT
+Test ExtractionTarget with edge cases and error conditions.
+```csharp
+// Test case: ExtractionTarget with no valid statements or expressions
+var target = ExtractionTarget.CreateFromSelection(emptyNode, emptySpan, block, semanticModel);
+// Should throw InvalidOperationException when nothing to extract
+
+// Test case: ExtractionTarget with complex nested expressions
+var target = ExtractionTarget.CreateFromSelection(nestedExpressionNode, span, block, semanticModel);
+// Should correctly identify and extract nested expressions
+```
+
+### ExtractMethod Error Conditions - DRAFT
+Test ExtractMethod with invalid selections and null conditions.
+```csharp
+// Test case: ExtractMethod with null syntax root
+var extractMethod = ExtractMethod.Create(["1:1-2:2", "TestMethod"]);
+var result = await extractMethod.PerformAsync(documentWithNullRoot);
+// Should throw InvalidOperationException
+
+// Test case: ExtractMethod with no containing block
+var extractMethod = ExtractMethod.Create(["1:1-2:2", "TestMethod"]);
+var result = await extractMethod.PerformAsync(documentWithoutBlock);
+// Should throw InvalidOperationException
+
+// Test case: ExtractMethod with null semantic model
+var extractMethod = ExtractMethod.Create(["1:1-2:2", "TestMethod"]);
+var result = await extractMethod.PerformAsync(documentWithNullSemanticModel);
+// Should throw InvalidOperationException
+```
+
+### InlineMethod Complex Scenarios - DRAFT
+Test InlineMethod with missing methods and null bodies.
+```csharp
+// Test case: InlineMethod with method declaration not found
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithMissingMethod);
+// Should return original document when method not found
+
+// Test case: InlineMethod with null method body
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithAbstractMethod);
+// Should return original document when method has no body
+```
+
+### MoveMemberUp Error Handling - DRAFT
+Test MoveMemberUp with missing classes and methods.
+```csharp
+// Test case: MoveMemberUp with class not found
+var moveMember = new MoveMemberUp("NonExistentClass", "SomeMethod");
+var result = await moveMember.PerformAsync(document);
+// Should return original document and log error
+
+// Test case: MoveMemberUp with no base class
+var moveMember = new MoveMemberUp("SealedClass", "SomeMethod");
+var result = await moveMember.PerformAsync(sealedClassDocument);
+// Should return original document and log error
+
+// Test case: MoveMemberUp with method not found
+var moveMember = new MoveMemberUp("DerivedClass", "NonExistentMethod");
+var result = await moveMember.PerformAsync(document);
+// Should return original document and log error
+```
+
+### RenameSymbol Error Paths - DRAFT
+Test RenameSymbol with unsupported symbols and error conditions.
+```csharp
+// Test case: RenameSymbol with non-identifier token
+var renameSymbol = new RenameSymbol(new Cursor(1, 1), "newName");
+var result = await renameSymbol.PerformAsync(documentWithKeyword);
+// Should return original document when token is not renameable
+
+// Test case: RenameSymbol with unsupported symbol type
+var renameSymbol = new RenameSymbol(new Cursor(1, 1), "newName");
+var result = await renameSymbol.PerformAsync(documentWithUnsupportedSymbol);
+// Should return original document and log error message
+```
+
+### StatementExtractionTarget Advanced Cases - DRAFT
+Test StatementExtractionTarget with complex return scenarios.
+```csharp
+// Test case: StatementExtractionTarget with multiple return paths
+var target = new StatementExtractionTarget(statementsWithMultipleReturns, block, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should handle complex return type inference
+
+// Test case: StatementExtractionTarget with async statements
+var target = new StatementExtractionTarget(asyncStatements, block, semanticModel);
+var methodDecl = target.CreateMethodDeclaration("ExtractedMethod");
+// Should create async method declaration
+
+// Test case: StatementExtractionTarget with tuple destructuring
+var target = new StatementExtractionTarget(tupleStatements, block, semanticModel);
+var replacement = target.CreateReplacementNode("ExtractedMethod");
+// Should create tuple destructuring assignment
+```
+
+### ExpressionExtractionTarget Type Edge Cases - DRAFT
+Test ExpressionExtractionTarget with complex type scenarios.
+```csharp
+// Test case: ExpressionExtractionTarget with error type
+var target = new ExpressionExtractionTarget(errorTypeExpression, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should fall back to pattern-based type inference
+
+// Test case: ExpressionExtractionTarget with method symbol inference
+var target = new ExpressionExtractionTarget(methodCallExpression, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should infer return type from method symbol
+
+// Test case: ExpressionExtractionTarget with Math.Max pattern
+var target = new ExpressionExtractionTarget(mathMaxExpression, semanticModel);
+var returnType = target.DetermineReturnType();
+// Should return int type for Math.Max expressions
+```
+
+### ReturnBehavior Analysis - DRAFT
+Test ReturnBehavior with complex control flow.
+```csharp
+// Test case: ReturnBehavior with switch statement all paths return
+var behavior = new ReturnBehavior([switchStatementAllPathsReturn]);
+var requiresReturn = behavior.RequiresReturnStatement;
+// Should return true when all switch paths return or throw
+```
