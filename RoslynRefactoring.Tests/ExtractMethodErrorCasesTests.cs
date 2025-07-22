@@ -23,9 +23,32 @@ public class ExtractMethodErrorCasesTests
         }
     }
 
+    [Test]
+    public async Task ShouldThrowWhenNoContainingBlock()
+    {
+        var documentWithoutBlock = CreateDocumentWithoutBlock();
+        var extractMethod = ExtractMethod.Create(["1:7-1:11", "TestMethod"]);
+
+        try
+        {
+            await extractMethod.PerformAsync(documentWithoutBlock);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Assert.That(ex.Message, Does.Contain("Selected statements are not inside a block"));
+        }
+    }
+
     private static Document CreateEmptyDocument()
     {
         var code = "";
+        return DocumentTestHelper.CreateDocument(code);
+    }
+
+    private static Document CreateDocumentWithoutBlock()
+    {
+        var code = "class Test;";
         return DocumentTestHelper.CreateDocument(code);
     }
 }
