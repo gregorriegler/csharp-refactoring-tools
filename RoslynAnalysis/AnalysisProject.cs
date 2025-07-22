@@ -71,6 +71,21 @@ public class AnalysisProject(string projectPath, string fileName)
 
         var result = await analysis.AnalyzeAsync(project, fileName);
 
+        if (result is { } dynamicResult)
+        {
+            var resultType = dynamicResult.GetType();
+            var outputProperty = resultType.GetProperty("output");
+            if (outputProperty != null)
+            {
+                var output = outputProperty.GetValue(dynamicResult)?.ToString();
+                if (!string.IsNullOrEmpty(output))
+                {
+                    Console.WriteLine(output);
+                    return;
+                }
+            }
+        }
+
         var json = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions
         {
             WriteIndented = true

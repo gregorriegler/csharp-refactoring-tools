@@ -194,16 +194,17 @@ public class CoverageAnalysis(string[] specificFiles) : IAnalysis
 
             if (uncoveredLines.Count > 0 || partlyCoveredLines.Count > 0)
             {
+                outputLines.Add("");
                 outputLines.Add($"{filename}:");
 
                 foreach (var line in uncoveredLines)
                 {
-                    outputLines.Add($" 🔴 L{line.Number}");
+                    outputLines.Add($"🔴 L{line.Number}");
                 }
 
                 foreach (var line in partlyCoveredLines)
                 {
-                    outputLines.Add($" 🟡 L{line.Number}");
+                    outputLines.Add($"🟡 L{line.Number}");
                 }
             }
         }
