@@ -155,7 +155,7 @@ public class CoverageAnalysis(string[] specificFiles) : IAnalysis
             return CoverageStatus.NotCovered;
         }
 
-        if (branchStr == "true" && !string.IsNullOrEmpty(conditionCoverageStr))
+        if (branchStr?.Equals("true", StringComparison.OrdinalIgnoreCase) == true && !string.IsNullOrEmpty(conditionCoverageStr))
         {
             var match = System.Text.RegularExpressions.Regex.Match(conditionCoverageStr, @"(\d+)%\s*\((\d+)/(\d+)\)");
             if (match.Success && int.TryParse(match.Groups[2].Value, out var covered) && int.TryParse(match.Groups[3].Value, out var total))
