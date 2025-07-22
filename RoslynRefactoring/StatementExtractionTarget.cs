@@ -12,6 +12,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly ReturnBehavior returnBehavior;
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
     private readonly TypeInferrer typeInferrer;
+    private readonly bool containsAwaitExpressions;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -26,13 +27,15 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             semanticModel.AnalyzeDataFlow(selectedStatements.First(), selectedStatements.Last())
             ?? throw new InvalidOperationException("DataFlow is null."));
         typeInferrer = new TypeInferrer();
+        containsAwaitExpressions = selectedStatements.Any(stmt =>
+            stmt.DescendantNodesAndSelf().OfType<AwaitExpressionSyntax>().Any());
     }
 
     protected override TypeSyntax DetermineReturnType()
     {
         var baseReturnType = GetBaseReturnType();
 
-        if (ContainsAwaitExpressions())
+        if (ContainsAwaitExpressions)
         {
             return WrapInTaskType(baseReturnType);
         }
@@ -58,11 +61,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         return DetermineLocalReturnType(returns);
     }
 
-    private bool ContainsAwaitExpressions()
-    {
-        return selectedStatements.Any(stmt =>
-            stmt.DescendantNodesAndSelf().OfType<AwaitExpressionSyntax>().Any());
-    }
+    private bool ContainsAwaitExpressions => containsAwaitExpressions;
 
     private TypeSyntax WrapInTaskType(TypeSyntax baseType)
     {
@@ -243,7 +242,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         if (returnBehavior.RequiresReturnStatement)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return SyntaxFactory.ReturnStatement(awaitedCall);
         }
 
@@ -251,21 +250,21 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         if (returns.Count == 0)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return GetCallStatement(awaitedCall);
         }
 
         if (returns.Count > 1)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return CreateTupleDestructuringStatement(awaitedCall, returns);
         }
 
         if (returns.FirstOrDefault() is { } localReturnSymbol)
         {
             var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions() ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return CreateLocalReturnStatement(awaitedCall, localReturnSymbol);
         }
 
@@ -351,6 +350,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     protected override bool IsAsyncMethod()
     {
-        return ContainsAwaitExpressions();
+        return ContainsAwaitExpressions;
     }
 }
