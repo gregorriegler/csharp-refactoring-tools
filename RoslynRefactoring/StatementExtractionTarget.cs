@@ -72,9 +72,20 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ParseTypeName("Task");
         }
 
+        if (IsTaskType(baseType))
+        {
+            return baseType;
+        }
+
         return SyntaxFactory.GenericName("Task")
             .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
                 SyntaxFactory.SingletonSeparatedList(baseType)));
+    }
+
+    private bool IsTaskType(TypeSyntax type)
+    {
+        var typeString = type.ToString();
+        return typeString == "Task" || typeString.StartsWith("Task<");
     }
 
     private TypeSyntax DetermineVoidReturnType()

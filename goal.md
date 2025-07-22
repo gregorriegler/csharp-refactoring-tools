@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -48,8 +48,8 @@ catch (FileNotFoundException ex)
 // Extract: file processing with error handling
 ```
 
-### Async Method Extraction - DRAFT
-Extract code containing await expressions.
+### Async Method Extraction - REFINED
+- [x] Extract code containing await expressions.
 ```csharp
 var client = new HttpClient();
 var response = await client.GetAsync(url);

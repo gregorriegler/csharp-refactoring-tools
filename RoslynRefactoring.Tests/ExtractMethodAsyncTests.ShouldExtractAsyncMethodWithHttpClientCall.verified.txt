@@ -1,0 +1,19 @@
+﻿using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+public class TestClass
+{
+    public async Task<T> ProcessDataAsync<T>(string url)
+    {
+        return await ExtractHttpRequestLogic(url);
+    }
+
+    private async Task<T> ExtractHttpRequestLogic(string url)
+    {
+        var client = new HttpClient();
+        var response = await client.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<T>(content);
+    }
+}
