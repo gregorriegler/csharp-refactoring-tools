@@ -1,12 +1,12 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🟢
+## TDD Phase: 🧹
 
 ## Open Scenarios
 
 ## ExtractMethod Coverage Analysis - Lines Needing Tests
 
-### ExtractMethod Error Cases - DRAFT
+### ExtractMethod Error Cases - ✅ COMPLETED
 Test ExtractMethod when no valid extraction target found.
 ```csharp
 // Test case: ExtractMethod with invalid selection

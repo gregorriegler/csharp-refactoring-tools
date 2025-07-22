@@ -9,12 +9,12 @@ public class ExtractMethodErrorCasesTests
     [Test]
     public async Task ShouldThrowWhenNoValidExtractionTargetFound()
     {
-        var emptyDocument = CreateEmptyDocument();
+        var documentWithoutBlock = CreateDocumentWithoutBlock();
         var extractMethod = ExtractMethod.Create(["1:1-1:1", "TestMethod"]);
 
         try
         {
-            await extractMethod.PerformAsync(emptyDocument);
+            await extractMethod.PerformAsync(documentWithoutBlock);
             Assert.Fail("Expected InvalidOperationException was not thrown");
         }
         catch (InvalidOperationException ex)
@@ -50,5 +50,15 @@ public class ExtractMethodErrorCasesTests
     {
         var code = "class Test;";
         return DocumentTestHelper.CreateDocument(code);
+    }
+    [Test]
+    public async Task ShouldReturnOriginalDocumentWhenNoValidExtractionTargetFound()
+    {
+        var emptyDocument = CreateEmptyDocument();
+        var extractMethod = ExtractMethod.Create(["1:1-1:1", "TestMethod"]);
+
+        var result = await extractMethod.PerformAsync(emptyDocument);
+
+        Assert.That(result, Is.EqualTo(emptyDocument));
     }
 }

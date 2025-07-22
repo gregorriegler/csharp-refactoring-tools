@@ -40,19 +40,34 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         var selectedNode = root.FindNode(span);
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
-        if (block == null) throw new InvalidOperationException("Selected statements are not inside a block.");
+        if (block == null)
+        {
+            if (string.IsNullOrWhiteSpace(root.ToString()))
+            {
+                return document;
+            }
+            throw new InvalidOperationException("Selected statements are not inside a block.");
+        }
 
         var model = await document.GetSemanticModelAsync();
         if (model == null) throw new InvalidOperationException("SemanticModel is null.");
-        var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block, model);
-        var replacementNode = extractionTarget.CreateReplacementNode(newMethodName);
-        extractionTarget.ReplaceInEditor(editor, replacementNode);
-        var methodDeclaration = extractionTarget.CreateMethodDeclaration(newMethodName);
-        var insertionPoint = extractionTarget.GetInsertionPoint();
-        editor.InsertAfter(insertionPoint, methodDeclaration);
 
-        var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
-        Console.WriteLine($"✅ Extracted method '{newMethodName}'");
-        return document.WithSyntaxRoot(newRoot);
+        try
+        {
+            var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block, model);
+            var replacementNode = extractionTarget.CreateReplacementNode(newMethodName);
+            extractionTarget.ReplaceInEditor(editor, replacementNode);
+            var methodDeclaration = extractionTarget.CreateMethodDeclaration(newMethodName);
+            var insertionPoint = extractionTarget.GetInsertionPoint();
+            editor.InsertAfter(insertionPoint, methodDeclaration);
+
+            var newRoot = editor.GetChangedRoot().NormalizeWhitespace();
+            Console.WriteLine($"✅ Extracted method '{newMethodName}'");
+            return document.WithSyntaxRoot(newRoot);
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "No statements or expressions selected for extraction.")
+        {
+            return document;
+        }
     }
 }
