@@ -19,7 +19,7 @@ public sealed class TypeInferrer
             return regularTypeInfo.Type.ToDisplayString();
         }
 
-        return InferTypeFromStringPattern(expression);
+        return InferTypeFromExpressionText(expression);
     }
 
     private string GetTypeDisplayString(ITypeSymbol? type)
@@ -31,7 +31,7 @@ public sealed class TypeInferrer
         return "string";
     }
 
-    private string InferTypeFromStringPattern(ExpressionSyntax expression)
+    private string InferTypeFromExpressionText(ExpressionSyntax expression)
     {
         var expressionText = expression.ToString();
         if (expressionText.Contains(".ToList()"))
