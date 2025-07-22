@@ -105,3 +105,50 @@ var localVar = GetValue();
 // ... many lines later in different scope
 Console.WriteLine(localVar); // localVar not accessible
 ```
+
+## Coverage Analysis - Lines Needing Tests
+
+### TypeInferrer Error Handling - DRAFT
+Test type inference when semantic model returns error types.
+```csharp
+// Test case: TypeInferrer.GetTypeDisplayString with null/error type
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(errorExpression, semanticModel);
+// Should return "string" for error types
+```
+
+### CodeSelection Validation - DRAFT
+Test CodeSelection.IsInRange with edge cases.
+```csharp
+// Test case: Selection beyond file boundaries
+var selection = CodeSelection.Parse("100:1-100:10");
+var result = selection.IsInRange(shortFileLines);
+// Should return false for out-of-range selections
+```
+
+### ExtractMethod Error Cases - DRAFT
+Test ExtractMethod when no valid extraction target found.
+```csharp
+// Test case: ExtractMethod with invalid selection
+var extractMethod = ExtractMethod.Create(["1:1-1:1"]);
+var result = await extractMethod.PerformAsync(emptyDocument);
+// Should handle gracefully when no extraction possible
+```
+
+### InlineMethod Edge Cases - DRAFT
+Test InlineMethod with complex method signatures.
+```csharp
+// Test case: InlineMethod with generic method parameters
+var inlineMethod = InlineMethod.Create(["methodName"]);
+var result = await inlineMethod.PerformAsync(genericMethodDocument);
+// Should handle generic method inlining
+```
+
+### MoveMemberUp Validation - DRAFT
+Test MoveMemberUp when no base class exists.
+```csharp
+// Test case: MoveMemberUp with no inheritance hierarchy
+var moveMember = MoveMemberUp.Create(["memberName"]);
+var result = await moveMember.PerformAsync(sealedClassDocument);
+// Should handle gracefully when no base class available
+```
