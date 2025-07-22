@@ -377,6 +377,23 @@ public class ValidationProcessor
         await VerifyExtract(code, CodeSelection.Parse("6:0-8:54"), "ValidateAndProcess");
     }
 
+    [Test]
+    public async Task CanExtractUnreachableCodeAfterReturn()
+    {
+        const string code = @"
+public class TestClass
+{
+    public void TestMethod(bool condition, string result)
+    {
+        if (condition)
+            return;
+        Console.WriteLine(""This might be unreachable"");
+    }
+}";
+
+        await VerifyExtract(code, CodeSelection.Parse("6:0-8:54"), "HandleConditionalReturn");
+    }
+
     private static async Task<(int startPosition, int endPosition)> CalculateSelectionPositions(Document document, CodeSelection codeSelection)
     {
         var sourceText = await document.GetTextAsync();
