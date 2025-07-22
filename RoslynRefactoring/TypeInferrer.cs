@@ -34,11 +34,15 @@ public sealed class TypeInferrer
     private string InferTypeFromExpressionText(ExpressionSyntax expression)
     {
         var expressionText = expression.ToString();
-        if (expressionText.Contains(".ToList()"))
-        {
-            return "List<string>";
-        }
 
-        return "object";
+        return expressionText switch
+        {
+            var text when text.Contains(".ToList()") => "List<string>",
+            var text when text.Contains(".ToArray()") => "string[]",
+            var text when text.Contains(".ToDictionary(") => "Dictionary<string, object>",
+            var text when text.Contains(".Select(") => "IEnumerable<object>",
+            var text when text.Contains(".Where(") => "IEnumerable<object>",
+            _ => "object"
+        };
     }
 }
