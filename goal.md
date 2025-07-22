@@ -145,10 +145,57 @@ var result = await inlineMethod.PerformAsync(genericMethodDocument);
 ```
 
 ### MoveMemberUp Validation - DRAFT
-Test MoveMemberUp when no base class exists.
+Test MoveMemberUp error handling paths.
 ```csharp
-// Test case: MoveMemberUp with no inheritance hierarchy
-var moveMember = MoveMemberUp.Create(["memberName"]);
+// Test case: MoveMemberUp with missing class
+var moveMember = new MoveMemberUp("NonExistentClass", "SomeMethod");
+var result = await moveMember.PerformAsync(document);
+// Should handle gracefully when class not found
+
+// Test case: MoveMemberUp with no base class
+var moveMember = new MoveMemberUp("SealedClass", "SomeMethod");
 var result = await moveMember.PerformAsync(sealedClassDocument);
 // Should handle gracefully when no base class available
+
+// Test case: MoveMemberUp with missing method
+var moveMember = new MoveMemberUp("DerivedClass", "NonExistentMethod");
+var result = await moveMember.PerformAsync(document);
+// Should handle gracefully when method not found
+```
+
+### RenameSymbol Error Handling - DRAFT
+Test RenameSymbol with unsupported symbol types.
+```csharp
+// Test case: RenameSymbol with unsupported token
+var renameSymbol = new RenameSymbol(new Cursor(1, 1), "newName");
+var result = await renameSymbol.PerformAsync(documentWithKeyword);
+// Should handle gracefully when cursor is on keyword or unsupported symbol
+```
+
+### ExtractCollaboratorInterface Null Handling - DRAFT
+Test ExtractCollaboratorInterface with null inputs.
+```csharp
+// Test case: ExtractCollaboratorInterface with null document
+var extractor = new ExtractCollaboratorInterface(validSelection);
+var result = await extractor.PerformAsync(null);
+// Should throw ArgumentNullException
+
+// Test case: ExtractCollaboratorInterface with null syntax root
+var extractor = new ExtractCollaboratorInterface(validSelection);
+var result = await extractor.PerformAsync(documentWithNullRoot);
+// Should return original document when syntax root is null
+```
+
+### TypeInferrer Fallback Paths - DRAFT
+Test TypeInferrer when semantic model fails.
+```csharp
+// Test case: TypeInferrer with error type in await expression
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(awaitExpressionWithErrorType, semanticModel);
+// Should return correct fallback type
+
+// Test case: TypeInferrer with error type in regular expression
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(regularExpressionWithErrorType, semanticModel);
+// Should fall back to pattern-based inference
 ```
