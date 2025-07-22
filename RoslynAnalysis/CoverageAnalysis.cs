@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
 
 namespace RoslynAnalysis;
 
@@ -11,7 +12,7 @@ public class CoverageAnalysis(string[] specificFiles) : IAnalysis
         return new CoverageAnalysis(args);
     }
 
-    public async Task<object> AnalyzeAsync(Microsoft.CodeAnalysis.Project project, string fileName)
+    public async Task<object> AnalyzeAsync(Project project, string fileName)
     {
         var projectPath = project.FilePath;
         if (string.IsNullOrEmpty(projectPath))
