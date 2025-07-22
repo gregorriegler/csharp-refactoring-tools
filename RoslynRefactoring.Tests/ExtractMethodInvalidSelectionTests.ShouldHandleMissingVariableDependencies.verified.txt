@@ -1,0 +1,21 @@
+﻿public class TestClass
+{
+    public void TestMethod()
+    {
+        var localVar = GetValue();
+        if (true)
+        {
+            ExtractedMethod(localVar);
+        }
+    }
+
+    private object ExtractedMethod(string localVar)
+    {
+        return Console.WriteLine(localVar);
+    }
+
+    private string GetValue()
+    {
+        return "test";
+    }
+}

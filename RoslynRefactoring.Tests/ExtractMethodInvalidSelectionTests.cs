@@ -61,4 +61,30 @@ public class ExtractMethodInvalidSelectionTests
         await VerifyExtract(code, CodeSelection.Parse("7:12-8:17"), "ExtractedMethod");
     }
 
+    [Test]
+    public async Task ShouldHandleMissingVariableDependencies()
+    {
+        const string code = """
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    var localVar = GetValue();
+
+                    if (true)
+                    {
+                        Console.WriteLine(localVar);
+                    }
+                }
+
+                private string GetValue()
+                {
+                    return "test";
+                }
+            }
+            """;
+
+        await VerifyExtract(code, CodeSelection.Parse("9:8-9:40"), "ExtractedMethod");
+    }
+
 }

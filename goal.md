@@ -89,8 +89,8 @@ var name = "outer";
 }
 ```
 
-### Unreachable Code After Return - DRAFT
-Selection includes code after a return statement.
+### Unreachable Code After Return - REFINED
+- [x] Selection includes code after a return statement.
 ```csharp
 if (condition)
     return result;
