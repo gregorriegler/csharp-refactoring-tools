@@ -37,4 +37,28 @@ public class ExtractMethodInvalidSelectionTests
         await Verify(result);
     }
 
+    [Test]
+    public async Task ShouldHandleInvalidSelectionFromMiddleOfParameterToNextStatement()
+    {
+        const string code = """
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    var x = SomeMethod(
+                        parameter1,
+                        parameter2);
+                    var y = x + 1;
+                }
+
+                private int SomeMethod(string param1, string param2)
+                {
+                    return 42;
+                }
+            }
+            """;
+
+        await VerifyExtract(code, CodeSelection.Parse("7:12-8:17"), "ExtractedMethod");
+    }
+
 }
