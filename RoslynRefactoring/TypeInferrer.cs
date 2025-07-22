@@ -5,6 +5,18 @@ namespace RoslynRefactoring;
 
 public sealed class TypeInferrer
 {
+    private const string ToListPattern = ".ToList()";
+    private const string ToArrayPattern = ".ToArray()";
+    private const string ToDictionaryPattern = ".ToDictionary(";
+    private const string SelectPattern = ".Select(";
+    private const string WherePattern = ".Where(";
+    private const string ListStringType = "List<string>";
+    private const string StringArrayType = "string[]";
+    private const string DictionaryType = "Dictionary<string, object>";
+    private const string EnumerableType = "IEnumerable<object>";
+    private const string StringType = "string";
+    private const string ObjectType = "object";
+
     public string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         if (expression is AwaitExpressionSyntax awaitExpr)
@@ -28,7 +40,7 @@ public sealed class TypeInferrer
         {
             return type.ToDisplayString();
         }
-        return "string";
+        return StringType;
     }
 
     private string InferTypeFromExpressionText(ExpressionSyntax expression)
@@ -37,12 +49,12 @@ public sealed class TypeInferrer
 
         return expressionText switch
         {
-            var text when text.Contains(".ToList()") => "List<string>",
-            var text when text.Contains(".ToArray()") => "string[]",
-            var text when text.Contains(".ToDictionary(") => "Dictionary<string, object>",
-            var text when text.Contains(".Select(") => "IEnumerable<object>",
-            var text when text.Contains(".Where(") => "IEnumerable<object>",
-            _ => "object"
+            var text when text.Contains(ToListPattern) => ListStringType,
+            var text when text.Contains(ToArrayPattern) => StringArrayType,
+            var text when text.Contains(ToDictionaryPattern) => DictionaryType,
+            var text when text.Contains(SelectPattern) => EnumerableType,
+            var text when text.Contains(WherePattern) => EnumerableType,
+            _ => ObjectType
         };
     }
 }
