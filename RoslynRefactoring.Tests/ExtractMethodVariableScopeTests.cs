@@ -29,12 +29,8 @@ public class ExtractMethodVariableScopeTests
 
     private static async Task VerifyExtract(string code, CodeSelection codeSelection, string newMethodName)
     {
-        var document = DocumentTestHelper.CreateDocument(code);
-
-        var extractMethod = new ExtractMethod(codeSelection, newMethodName);
-        var updatedDocument = await extractMethod.PerformAsync(document);
-
-        var refactoredFormatted = Formatter.Format((await updatedDocument.GetSyntaxRootAsync())!, new AdhocWorkspace());
-        await Verify(refactoredFormatted.ToFullString());
+        var result = await ExtractMethodTestHelper.PerformExtractAndFormat(code, codeSelection, newMethodName);
+        await Verify(result);
     }
+
 }

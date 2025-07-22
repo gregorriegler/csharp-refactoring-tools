@@ -1,0 +1,19 @@
+﻿public class TestClass
+{
+    public void TestMethod()
+    {
+        var y = ExtractedMethod();
+    }
+
+    private int ExtractedMethod()
+    {
+        var x = SomeMethod(parameter1, parameter2);
+        var y = x + 1;
+        return y;
+    }
+
+    private int SomeMethod(string param1, string param2)
+    {
+        return 42;
+    }
+}
