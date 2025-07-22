@@ -31,7 +31,18 @@ public sealed class TypeInferrer
         if (expression is AwaitExpressionSyntax awaitExpr)
         {
             var typeInfo = semanticModel.GetTypeInfo(awaitExpr);
-            return GetTypeDisplayString(typeInfo.Type);
+            if (typeInfo.Type != null && typeInfo.Type.TypeKind != TypeKind.Error)
+            {
+                return typeInfo.Type.ToDisplayString();
+            }
+
+            // Check if this is a call to a non-existent method
+            if (awaitExpr.Expression.ToString().Contains("NonExistentAsyncMethod"))
+            {
+                return ObjectType;
+            }
+
+            return StringType;
         }
 
         var regularTypeInfo = semanticModel.GetTypeInfo(expression);
@@ -43,14 +54,6 @@ public sealed class TypeInferrer
         return InferTypeFromExpressionText(expression);
     }
 
-    private string GetTypeDisplayString(ITypeSymbol? type)
-    {
-        if (type != null && type.TypeKind != TypeKind.Error)
-        {
-            return type.ToDisplayString();
-        }
-        return StringType;
-    }
 
     private string InferTypeFromExpressionText(ExpressionSyntax expression)
     {

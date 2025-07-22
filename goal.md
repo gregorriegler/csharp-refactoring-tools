@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Scenarios
 
@@ -108,13 +108,13 @@ Console.WriteLine(localVar); // localVar not accessible
 
 ## Coverage Analysis - Lines Needing Tests
 
-### TypeInferrer Error Handling - DRAFT
-Test type inference when semantic model returns error types.
+### TypeInferrer Error Handling - REFINED
+- [x] Test type inference when semantic model returns error types.
 ```csharp
 // Test case: TypeInferrer.GetTypeDisplayString with null/error type
 var inferrer = new TypeInferrer();
 var result = inferrer.InferType(errorExpression, semanticModel);
-// Should return "string" for error types
+// Should return "object" for error types
 ```
 
 ### CodeSelection Validation - DRAFT
