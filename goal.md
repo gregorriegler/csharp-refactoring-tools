@@ -197,3 +197,77 @@ var target = ExtractionTarget.CreateFromSelection(childNode, ancestorSpan, block
 // Test case: ExtractionTarget with equals value clause
 var target = ExtractionTarget.CreateFromSelection(equalsValueNode, span, block, semanticModel);
 // Should extract value from equals value clause
+
+
+## Dead Code Analysis - Lines Needing Tests
+
+### MoveMemberUp Error Handling - DRAFT
+Test MoveMemberUp with null/missing scenarios.
+```csharp
+// Test case: MoveMemberUp when derived class not found
+var moveMemberUp = MoveMemberUp.Create(["NonExistentClass", "TestMethod"]);
+var result = await moveMemberUp.PerformAsync(document);
+// Should return original document when derived class not found (L38-39)
+
+// Test case: MoveMemberUp when base class not found
+var moveMemberUp = MoveMemberUp.Create(["DerivedClass", "TestMethod"]);
+var result = await moveMemberUp.PerformAsync(documentWithoutBaseClass);
+// Should return original document when base class not found (L47-48)
+
+// Test case: MoveMemberUp when member not found
+var moveMemberUp = MoveMemberUp.Create(["DerivedClass", "NonExistentMethod"]);
+var result = await moveMemberUp.PerformAsync(document);
+// Should return original document when member not found (L53-54, L62-63)
+```
+
+### InlineMethod Error Handling - DRAFT
+Test InlineMethod with null method scenarios.
+```csharp
+// Test case: InlineMethod when method declaration not found
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithInvalidMethod);
+// Should return null when method declaration not found (L152)
+
+// Test case: InlineMethod when method body is null
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithNullMethodBody);
+// Should return null when method body is null (L161)
+```
+
+### TypeInferrer Error Handling - DRAFT
+Test TypeInferrer with error type scenarios.
+```csharp
+// Test case: TypeInferrer with error type in await expression
+var inferrer = new TypeInferrer();
+var result = inferrer.InferType(awaitExpressionWithErrorType, semanticModel);
+// Should return "string" when error type detected (L36-37)
+
+// Test case: TypeInferrer when method block not found
+var inferrer = new TypeInferrer();
+var result = inferrer.ResolveActualTypeForForeachVariable(localSymbol, containingBlock, semanticModel);
+// Should return "var" when method block not found (L95-96)
+
+// Test case: TypeInferrer when foreach statement not found
+var inferrer = new TypeInferrer();
+var result = inferrer.ResolveActualTypeForForeachVariable(localSymbol, containingBlock, semanticModel);
+// Should return "var" when foreach statement not found (L101-102)
+
+// Test case: TypeInferrer when collection type has no type arguments
+var inferrer = new TypeInferrer();
+var result = inferrer.ExtractElementTypeFromCollection(foreachStatement, semanticModel);
+// Should return "var" when collection type has no type arguments (L134)
+```
+
+### RenameSymbol Error Handling - DRAFT
+Test RenameSymbol with null scope scenarios.
+```csharp
+// Test case: RenameSymbol when declaration scope not found
+var renameSymbol = RenameSymbol.Create(["1:1", "newName"]);
+var result = await renameSymbol.PerformAsync(documentWithVariableWithoutScope);
+// Should return original document when declaration scope not found (L142)
+
+// Test case: RenameSymbol when document root is null during solution-wide rename
+var renameSymbol = RenameSymbol.Create(["1:1", "newName"]);
+var result = await renameSymbol.PerformAsync(documentInSolutionWithNullRoots);
+// Should continue processing when document root is null (L174)
+```
