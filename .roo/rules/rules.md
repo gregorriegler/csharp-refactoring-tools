@@ -28,6 +28,7 @@ Hypothesize first and prove your hypothesis before taking action.
 - private fields start with a lower case letter, not with underscores
 - Use curly braces for single line ifs
 - Avoid else if possible
+- Avoid overly defensive programming and focus on the happy path first
 - Only ever use file-scoped namespaces
 - Prefer collection expression over new List
 - Each class goes into its own file, unless its only used by the other class in the file and it both fits into 100 lines

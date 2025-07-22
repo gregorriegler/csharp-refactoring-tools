@@ -500,3 +500,109 @@ var renameSymbol = new RenameSymbol(new Cursor(1, 1), "newName");
 var result = await renameSymbol.PerformAsync(documentInSolutionWithNullRoot);
 // Should continue processing other documents when one has null root
 ```
+
+#### TypeInferrer Foreach Variable Resolution - DRAFT
+Test TypeInferrer with missing method block and foreach statement.
+```csharp
+// Test case: TypeInferrer with null method block
+var inferrer = new TypeInferrer();
+var result = inferrer.ResolveActualTypeForForeachVariable(localSymbol, containingBlock, semanticModel);
+// Should return "var" when method block not found
+
+// Test case: TypeInferrer with missing foreach statement
+var inferrer = new TypeInferrer();
+var result = inferrer.ResolveActualTypeForForeachVariable(localSymbol, containingBlock, semanticModel);
+// Should return "var" when foreach statement not found
+
+// Test case: TypeInferrer with collection type without type arguments
+var inferrer = new TypeInferrer();
+var result = inferrer.ExtractElementTypeFromCollection(foreachWithoutTypeArgs, semanticModel);
+// Should return "var" when collection has no type arguments
+```
+
+#### StatementExtractionTarget Complex Return Logic - DRAFT
+Test StatementExtractionTarget with edge cases in return type determination.
+```csharp
+// Test case: StatementExtractionTarget with Task type wrapping
+var target = new StatementExtractionTarget(awaitStatements, block, semanticModel);
+var returnType = target.WrapInTaskType(voidType);
+// Should wrap void in Task, non-void in Task<T>
+
+// Test case: StatementExtractionTarget with existing Task type
+var target = new StatementExtractionTarget(statements, block, semanticModel);
+var returnType = target.WrapInTaskType(taskType);
+// Should not double-wrap existing Task types
+
+// Test case: StatementExtractionTarget with local declaration return
+var target = new StatementExtractionTarget(localDeclStatements, block, semanticModel);
+var methodBody = target.CreateMethodBody();
+// Should add return statement for last local declaration
+
+// Test case: StatementExtractionTarget with bool return requirement
+var target = new StatementExtractionTarget(boolReturnStatements, block, semanticModel);
+var methodBody = target.CreateMethodBody();
+// Should add return true for bool methods without explicit return
+
+// Test case: StatementExtractionTarget with tuple destructuring
+var target = new StatementExtractionTarget(multiReturnStatements, block, semanticModel);
+var replacement = target.CreateTupleDestructuringStatement(methodCall, returns);
+// Should create proper tuple destructuring assignment
+
+// Test case: StatementExtractionTarget with single return statement selection
+var target = new StatementExtractionTarget([returnStatement], block, semanticModel);
+var replacement = target.CreateLocalReturnStatement(methodCall, localSymbol);
+// Should create return statement when selection is single return
+
+// Test case: StatementExtractionTarget with method insertion point
+var target = new StatementExtractionTarget(statements, block, semanticModel);
+var insertionPoint = target.GetInsertionPoint();
+// Should find method node or fall back to last statement
+```
+
+#### ExpressionExtractionTarget Pattern Matching - DRAFT
+Test ExpressionExtractionTarget with specific expression patterns.
+```csharp
+// Test case: ExpressionExtractionTarget with ToList pattern
+var target = new ExpressionExtractionTarget(toListExpression, semanticModel);
+var returnType = target.TryInferTypeFromExpression();
+// Should return List<string> for .ToList() expressions
+
+// Test case: ExpressionExtractionTarget with Math.Max pattern
+var target = new ExpressionExtractionTarget(mathMaxExpression, semanticModel);
+var returnType = target.TryInferTypeFromExpression();
+// Should return int for Math.Max expressions
+
+// Test case: ExpressionExtractionTarget with method symbol return type
+var target = new ExpressionExtractionTarget(methodCallExpression, semanticModel);
+var returnType = target.TryInferTypeFromExpression();
+// Should use method symbol return type when available
+
+// Test case: ExpressionExtractionTarget with insertion point fallback
+var target = new ExpressionExtractionTarget(orphanExpression, semanticModel);
+var insertionPoint = target.GetInsertionPoint();
+// Should fall back to expression itself when no containing method
+```
+
+#### ExtractionTarget Selection Edge Cases - DRAFT
+Test ExtractionTarget with complex selection scenarios.
+```csharp
+// Test case: ExtractionTarget with overlapping statement spans
+var target = ExtractionTarget.CreateFromSelection(blockNode, overlappingSpan, block, semanticModel);
+// Should correctly identify overlapping statements
+
+// Test case: ExtractionTarget with single statement span containment
+var target = ExtractionTarget.CreateFromSelection(statementNode, containingSpan, block, semanticModel);
+// Should handle span containment logic correctly
+
+// Test case: ExtractionTarget with expression in descendants
+var target = ExtractionTarget.CreateFromSelection(parentNode, expressionSpan, block, semanticModel);
+// Should find expression in descendant nodes
+
+// Test case: ExtractionTarget with expression in ancestors
+var target = ExtractionTarget.CreateFromSelection(childNode, ancestorSpan, block, semanticModel);
+// Should find expression in ancestor nodes
+
+// Test case: ExtractionTarget with equals value clause
+var target = ExtractionTarget.CreateFromSelection(equalsValueNode, span, block, semanticModel);
+// Should extract value from equals value clause
+```
