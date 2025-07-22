@@ -35,18 +35,15 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var span = await GetSpan(document, selection);
 
         var root = await document.GetSyntaxRootAsync();
-        if (root == null)
-            throw new InvalidOperationException("SyntaxRoot is null.");
+        if (root == null) throw new InvalidOperationException("SyntaxRoot is null.");
         var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
 
         var selectedNode = root.FindNode(span);
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
-        if (block == null)
-            throw new InvalidOperationException("Selected statements are not inside a block.");
+        if (block == null) throw new InvalidOperationException("Selected statements are not inside a block.");
 
         var model = await document.GetSemanticModelAsync();
-        if (model == null)
-            throw new InvalidOperationException("SemanticModel is null.");
+        if (model == null) throw new InvalidOperationException("SemanticModel is null.");
         var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block, model);
         var replacementNode = extractionTarget.CreateReplacementNode(newMethodName);
         extractionTarget.ReplaceInEditor(editor, replacementNode);

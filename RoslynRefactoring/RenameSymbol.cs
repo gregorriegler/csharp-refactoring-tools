@@ -178,9 +178,7 @@ public class RenameSymbol : IRefactoring
             {
                 var docRoot = await doc.GetSyntaxRootAsync();
                 if (docRoot == null)
-                {
                     continue;
-                }
 
                 List<SyntaxNode> methodReferences = [];
 

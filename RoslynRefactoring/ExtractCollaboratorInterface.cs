@@ -30,8 +30,7 @@ public class ExtractCollaboratorInterface : IRefactoring
     public async Task<Document> PerformAsync(Document document)
     {
         var documentRoot = await document.GetSyntaxRootAsync();
-        if (documentRoot == null)
-            return document;
+        if (documentRoot == null) return document;
 
         var documentEditor = await DocumentEditor.CreateAsync(document);
 

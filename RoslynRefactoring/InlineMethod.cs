@@ -149,9 +149,7 @@ public class InlineMethod(Cursor cursor) : IRefactoring
     {
         var methodDeclaration = await FindMethodDeclarationAsync(methodSymbol);
         if (methodDeclaration == null)
-        {
             return (null, null, null);
-        }
 
         var methodBody = methodDeclaration.Body ??
                          (methodDeclaration.ExpressionBody != null
@@ -160,9 +158,7 @@ public class InlineMethod(Cursor cursor) : IRefactoring
                              : null);
 
         if (methodBody == null)
-        {
             return (null, null, null);
-        }
 
         var parameterMap = CreateParameterMapping(methodDeclaration, invocation);
 

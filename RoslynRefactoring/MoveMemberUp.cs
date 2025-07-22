@@ -45,14 +45,12 @@ public class MoveMemberUp : IRefactoring
 
         if (derivedClass == null)
         {
-            Console.WriteLine($"Error: Class '{derivedClassName}' not found");
             return document;
         }
 
         var baseClass = FindBaseClass(root, derivedClass);
         if (baseClass == null)
         {
-            Console.WriteLine($"Error: Base class for '{derivedClassName}' not found");
             return document;
         }
 
@@ -62,7 +60,6 @@ public class MoveMemberUp : IRefactoring
 
         if (memberToMove == null)
         {
-            Console.WriteLine($"Error: Method '{memberName}' not found in class '{derivedClassName}'");
             return document;
         }
 
