@@ -176,7 +176,13 @@ public class CoverageAnalysis(string[] specificFiles) : IAnalysis
             return "No coverage data found.";
         }
 
-        var outputLines = new List<string>();
+        var outputLines = new List<string>
+        {
+            "Coverage Legend:",
+            "🔴 Not covered",
+            "🟡 Partly covered",
+            ""
+        };
 
         foreach (var kvp in coverageData)
         {
@@ -191,17 +197,17 @@ public class CoverageAnalysis(string[] specificFiles) : IAnalysis
 
                 foreach (var line in uncoveredLines)
                 {
-                    outputLines.Add($"  Line {line.Number}: Not covered");
+                    outputLines.Add($" 🔴 L{line.Number}");
                 }
 
                 foreach (var line in partlyCoveredLines)
                 {
-                    outputLines.Add($"  Line {line.Number}: Partly covered");
+                    outputLines.Add($" 🟡 L{line.Number}");
                 }
             }
         }
 
-        return outputLines.Count > 0 ? string.Join("\n", outputLines) : "All lines are fully covered!";
+        return outputLines.Count > 4 ? string.Join("\n", outputLines) : "Coverage Legend:\n🔴 Not covered\n🟡 Partly covered\n\nAll lines are fully covered!";
     }
 
     private Dictionary<string, FileData> FilterCoverageData(Dictionary<string, FileData> coverageData, string[] specificFiles)
