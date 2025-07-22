@@ -98,8 +98,8 @@ Console.WriteLine("This might be unreachable");
 // Extract: both statements together
 ```
 
-### Missing Variable Dependencies - DRAFT
-Selected code uses variables not available in extraction scope.
+### Missing Variable Dependencies - REFINED
+- [x] Selected code uses variables not available in extraction scope.
 ```csharp
 var localVar = GetValue();
 // ... many lines later in different scope
