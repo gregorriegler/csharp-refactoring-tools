@@ -127,45 +127,6 @@ public class RenameSymbol : IRefactoring
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private Document RenameMethod(Document document, SyntaxNode root, MethodDeclarationSyntax methodDeclaration, string oldName)
-    {
-        var containingClass = methodDeclaration.FirstAncestorOrSelf<ClassDeclarationSyntax>();
-        if (containingClass == null)
-        {
-            var newRoot = root.ReplaceNode(methodDeclaration,
-                methodDeclaration.WithIdentifier(SyntaxFactory.Identifier(newName)));
-            return document.WithSyntaxRoot(newRoot);
-        }
-
-        var referencesToRename = new List<SyntaxNode> { methodDeclaration };
-
-        var methodCalls = containingClass.DescendantNodes()
-            .OfType<InvocationExpressionSyntax>()
-            .Where(invocation =>
-            {
-                if (invocation.Expression is IdentifierNameSyntax identifier)
-                {
-                    return identifier.Identifier.ValueText == oldName;
-                }
-                return false;
-            });
-
-        referencesToRename.AddRange(methodCalls.Select(call => call.Expression));
-
-        var finalRoot = root.ReplaceNodes(referencesToRename, (original, _) =>
-        {
-            return original switch
-            {
-                MethodDeclarationSyntax method =>
-                    method.WithIdentifier(SyntaxFactory.Identifier(newName)),
-                IdentifierNameSyntax identifier =>
-                    identifier.WithIdentifier(SyntaxFactory.Identifier(newName)),
-                _ => original
-            };
-        });
-
-        return document.WithSyntaxRoot(finalRoot);
-    }
 
     private async Task<Document> RenameMethodSolutionWide(Document document, MethodDeclarationSyntax methodDeclaration, string oldName)
     {
