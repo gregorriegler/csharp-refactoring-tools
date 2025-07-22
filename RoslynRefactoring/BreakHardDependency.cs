@@ -50,9 +50,6 @@ public class BreakHardDependency : IRefactoring
 
     private async Task<(Document document, SyntaxNode? documentRoot, DocumentEditor documentEditor)> ValidateDocumentAndGetRoot(Document document)
     {
-        if (document == null)
-            throw new ArgumentNullException(nameof(document));
-
         var documentRoot = await document.GetSyntaxRootAsync();
         var documentEditor = await DocumentEditor.CreateAsync(document);
 
