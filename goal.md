@@ -68,8 +68,8 @@ return (isValid, errorMessage, processedValue);
 // Extract: validation and processing logic returning (bool, string, object)
 ```
 
-### Invalid Selection Boundaries - DRAFT
-User selects partial statements or crosses method boundaries.
+### Invalid Selection Boundaries - REFINED
+- [x] User selects partial statements or crosses method boundaries.
 ```csharp
 var x = SomeMethod(
     parameter1,
