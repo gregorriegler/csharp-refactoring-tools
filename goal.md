@@ -271,3 +271,59 @@ var renameSymbol = RenameSymbol.Create(["1:1", "newName"]);
 var result = await renameSymbol.PerformAsync(documentInSolutionWithNullRoots);
 // Should continue processing when document root is null (L174)
 ```
+
+### StatementExtractionTarget Uncovered Error Paths - DRAFT
+Test StatementExtractionTarget with error conditions and edge cases.
+```csharp
+// Test case: StatementExtractionTarget with unsupported return symbol type
+var target = new StatementExtractionTarget(statementsWithUnsupportedReturn, block, semanticModel);
+var returnType = target.DetermineLocalReturnType(unsupportedReturns);
+// Should throw InvalidOperationException for unsupported return symbol type (L131)
+
+// Test case: StatementExtractionTarget with unsupported symbol type in parameters
+var target = new StatementExtractionTarget(statementsWithUnsupportedSymbol, block, semanticModel);
+var symbolType = target.GetSymbolType(unsupportedSymbol);
+// Should throw InvalidOperationException for unsupported symbol type (L236)
+
+// Test case: StatementExtractionTarget with unsupported return in replacement node
+var target = new StatementExtractionTarget(statementsWithUnsupportedReturn, block, semanticModel);
+var replacement = target.CreateReplacementNode("ExtractedMethod");
+// Should throw InvalidOperationException for unsupported return symbol type (L271)
+
+// Test case: StatementExtractionTarget with uncovered lines in method body creation
+var target = new StatementExtractionTarget(specificStatements, block, semanticModel);
+var methodBody = target.CreateMethodBody();
+// Should cover uncovered lines in method body creation logic (L70-71, L97-99, L131, L148, L180-188, L200, L236, L271, L296, L305-306, L348)
+```
+
+### ExtractCollaboratorInterface Uncovered Path - DRAFT
+Test ExtractCollaboratorInterface with partly covered scenarios.
+```csharp
+// Test case: ExtractCollaboratorInterface with specific selection handling
+var extractor = ExtractCollaboratorInterface.Create(["1:1-2:2"]);
+var result = await extractor.PerformAsync(documentWithSpecificCollaborator);
+// Should cover partly covered line in selection processing (L33)
+```
+
+### ExpressionExtractionTarget Uncovered Paths - DRAFT
+Test ExpressionExtractionTarget with specific error conditions.
+```csharp
+// Test case: ExpressionExtractionTarget with null DataFlow
+var target = new ExpressionExtractionTarget(expressionWithNullDataFlow, semanticModel);
+var dataFlow = target.AnalyzeDataFlow();
+// Should throw InvalidOperationException when DataFlow is null (L14)
+
+// Test case: ExpressionExtractionTarget with error type fallback
+var target = new ExpressionExtractionTarget(errorTypeExpression, semanticModel);
+var returnType = target.TryInferTypeFromExpression();
+// Should fall back to pattern-based inference (L34, L42-48, L52-53, L97)
+```
+
+### ReturnBehavior Uncovered Path - DRAFT
+Test ReturnBehavior with specific switch statement scenarios.
+```csharp
+// Test case: ReturnBehavior with switch statement analysis
+var behavior = new ReturnBehavior([switchStatementWithAllReturns]);
+var requiresReturn = behavior.AllPathsReturnOrThrow;
+// Should analyze switch statement sections for return/throw (L20)
+```
