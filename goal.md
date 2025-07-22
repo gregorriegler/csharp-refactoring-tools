@@ -461,3 +461,42 @@ var behavior = new ReturnBehavior([switchStatementAllPathsReturn]);
 var requiresReturn = behavior.RequiresReturnStatement;
 // Should return true when all switch paths return or throw
 ```
+
+### Additional Coverage - Dead Code Analysis Results
+
+#### MoveMemberUp Remaining Error Paths - DRAFT
+Test MoveMemberUp with null root and RemoveNode failure.
+```csharp
+// Test case: MoveMemberUp with null syntax root
+var moveMember = new MoveMemberUp("TestClass", "TestMethod");
+var result = await moveMember.PerformAsync(documentWithNullRoot);
+// Should return original document when root is null
+
+// Test case: MoveMemberUp with RemoveNode returning null
+var moveMember = new MoveMemberUp("TestClass", "TestMethod");
+var result = await moveMember.PerformAsync(documentWithUnremovableNode);
+// Should return original root when RemoveNode fails
+```
+
+#### InlineMethod Remaining Error Paths - DRAFT
+Test InlineMethod with method declaration not found.
+```csharp
+// Test case: InlineMethod with method declaration not found
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithMissingMethodDeclaration);
+// Should return original document when method declaration not found
+
+// Test case: InlineMethod with null method body after expression body check
+var inlineMethod = InlineMethod.Create(["1:1"]);
+var result = await inlineMethod.PerformAsync(documentWithMethodWithoutBody);
+// Should return original document when method has no body
+```
+
+#### RenameSymbol Solution-Wide Error Path - DRAFT
+Test RenameSymbol with null document root in solution-wide rename.
+```csharp
+// Test case: RenameSymbol solution-wide with null document root
+var renameSymbol = new RenameSymbol(new Cursor(1, 1), "newName");
+var result = await renameSymbol.PerformAsync(documentInSolutionWithNullRoot);
+// Should continue processing other documents when one has null root
+```
