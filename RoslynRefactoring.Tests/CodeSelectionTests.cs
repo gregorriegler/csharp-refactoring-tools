@@ -9,8 +9,7 @@ public class CodeSelectionTests
     public void IsInRange_WithSelectionBeyondFileBoundaries_ShouldReturnFalse()
     {
         var selection = CodeSelection.Parse("100:1-100:10");
-        var shortFileText = SourceText.From("line 1\nline 2\nline 3");
-        var lines = shortFileText.Lines;
+        var lines = CreateShortFileLines();
 
         var result = selection.IsInRange(lines);
 
@@ -21,8 +20,7 @@ public class CodeSelectionTests
     public void IsInRange_WithValidSelection_ShouldReturnTrue()
     {
         var selection = CodeSelection.Parse("2:1-3:5");
-        var fileText = SourceText.From("line 1\nline 2\nline 3\nline 4");
-        var lines = fileText.Lines;
+        var lines = CreateMultiLineFileLines();
 
         var result = selection.IsInRange(lines);
 
@@ -38,8 +36,8 @@ public class CodeSelectionTests
     [Test]
     public void Create_WithInvalidLineNumbers_ShouldThrowInvalidOperationException()
     {
-        var invalidCursor = new Cursor(0, 1);
-        var validCursor = new Cursor(1, 1);
+        var invalidCursor = CreateInvalidCursor();
+        var validCursor = CreateValidCursor();
 
         Assert.Throws<InvalidOperationException>(() => CodeSelection.Create(invalidCursor, validCursor));
     }
@@ -54,5 +52,27 @@ public class CodeSelectionTests
     public void CursorParse_WithNonNumericValues_ShouldThrowInvalidOperationException()
     {
         Assert.Throws<InvalidOperationException>(() => Cursor.Parse("abc:def"));
+    }
+
+    private static TextLineCollection CreateShortFileLines()
+    {
+        var fileText = SourceText.From("line 1\nline 2\nline 3");
+        return fileText.Lines;
+    }
+
+    private static TextLineCollection CreateMultiLineFileLines()
+    {
+        var fileText = SourceText.From("line 1\nline 2\nline 3\nline 4");
+        return fileText.Lines;
+    }
+
+    private static Cursor CreateInvalidCursor()
+    {
+        return new Cursor(0, 1);
+    }
+
+    private static Cursor CreateValidCursor()
+    {
+        return new Cursor(1, 1);
     }
 }
