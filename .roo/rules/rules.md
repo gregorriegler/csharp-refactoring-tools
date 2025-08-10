@@ -19,6 +19,18 @@ Hypothesize first and prove your hypothesis before taking action.
 # Commandline rules
 - We are in a Git Bash!!! ALWAYS USE BASH Commands!!!
 - for interacting with github use the github cli
+- avoid interactive commands
+
+# Commit rules
+We use Arlos commit notation V1
+Risk-based prefixes (lowercase = safe, uppercase = risky):
+
+f/F - Feature (small/large)
+b/B - Bug fix (small/large)
+r/R/R!! - Refactor (safe/risky/dangerous)
+t - Test (always safe)
+
+Example: r rename userId to id in User class
 
 # CSharp Style Guide
 
