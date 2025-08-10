@@ -133,6 +133,8 @@ public class Calculator
     public async Task CanExtractMethodCall()
     {
         const string code = @"
+using System;
+
 public class Calculator
 {
     public void Calculate()
@@ -143,13 +145,15 @@ public class Calculator
     }
 }";
 
-        await VerifyExtract(code, CodeSelection.Parse("8:21-8:35"), "GetMaxValue");
+        await VerifyExtract(code, CodeSelection.Parse("10:21-10:35"), "GetMaxValue");
     }
 
     [Test]
     public async Task CanExtractNestedExpressions()
     {
         const string code = @"
+using System;
+
 public class Calculator
 {
     public void Calculate()
@@ -160,7 +164,7 @@ public class Calculator
     }
 }";
 
-        await VerifyExtract(code, CodeSelection.Parse("8:21-8:43"), "GetMaxOfCalculations");
+        await VerifyExtract(code, CodeSelection.Parse("10:21-10:43"), "GetMaxOfCalculations");
     }
 
     [Test]

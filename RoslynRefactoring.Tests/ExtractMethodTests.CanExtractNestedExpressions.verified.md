@@ -2,6 +2,8 @@
 
 ```csharp
 
+using System;
+
 public class Calculator
 {
     public void Calculate()
@@ -24,6 +26,8 @@ Math.Max(a + 1, b * 2)
 ## Refactored
 
 ```csharp
+using System;
+
 public class Calculator
 {
     public void Calculate()

@@ -6,26 +6,20 @@ namespace RoslynRefactoring;
 
 public sealed class TypeInferrer
 {
-    private const string ToListPattern = ".ToList()";
-    private const string ToArrayPattern = ".ToArray()";
-    private const string ToDictionaryPattern = ".ToDictionary(";
-    private const string SelectPattern = ".Select(";
-    private const string WherePattern = ".Where(";
-    private const string ListStringType = "List<string>";
-    private const string StringArrayType = "string[]";
-    private const string DictionaryType = "Dictionary<string, object>";
-    private const string EnumerableType = "IEnumerable<object>";
     private const string StringType = "string";
     private const string ObjectType = "object";
 
-    private static readonly Dictionary<string, string> PatternTypeMapping = new()
+    private readonly List<IExpressionTypeInferenceStrategy> strategies;
+
+    public TypeInferrer()
     {
-        { ToListPattern, ListStringType },
-        { ToArrayPattern, StringArrayType },
-        { ToDictionaryPattern, DictionaryType },
-        { SelectPattern, EnumerableType },
-        { WherePattern, EnumerableType }
-    };
+        strategies = new List<IExpressionTypeInferenceStrategy>
+        {
+            new ToListTypeInferenceStrategy(),
+            new MethodSymbolTypeInferenceStrategy(),
+            new DefaultTypeInferenceStrategy()
+        };
+    }
 
     public string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
@@ -51,19 +45,17 @@ public sealed class TypeInferrer
             return regularTypeInfo.Type.ToDisplayString();
         }
 
-        return InferTypeFromExpressionText(expression);
+        return InferTypeUsingStrategies(expression, semanticModel);
     }
 
-
-    private string InferTypeFromExpressionText(ExpressionSyntax expression)
+    private string InferTypeUsingStrategies(ExpressionSyntax expression, SemanticModel semanticModel)
     {
-        var expressionText = expression.ToString();
-
-        foreach (var (pattern, type) in PatternTypeMapping)
+        foreach (var strategy in strategies)
         {
-            if (expressionText.Contains(pattern))
+            var result = strategy.InferType(expression, semanticModel);
+            if (result != null)
             {
-                return type;
+                return result.ToString();
             }
         }
 

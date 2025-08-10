@@ -193,6 +193,24 @@ public class TestClass
         Assert.That(result, Is.EqualTo("int"));
     }
 
+    [Test]
+    public void InferType_WithMathMaxCall_ShouldReturnInt()
+    {
+        var code = @"
+using System;
+public class TestClass
+{
+    public void TestMethod()
+    {
+        var result = Math.Max(5, 10);
+    }
+}";
+
+        var result = InferTypeFromMethodInvocation(code, "Math.Max");
+
+        Assert.That(result, Is.EqualTo("int"));
+    }
+
     private string InferTypeFromMethodInvocation(string code, string methodName)
     {
         var (root, semanticModel) = CreateSyntaxTreeAndModel(code);

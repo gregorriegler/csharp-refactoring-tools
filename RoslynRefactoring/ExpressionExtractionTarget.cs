@@ -40,7 +40,6 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         {
             new MethodSymbolTypeInferenceStrategy(),
             new ToListTypeInferenceStrategy(),
-            new MathMaxTypeInferenceStrategy(),
             new DefaultTypeInferenceStrategy()
         };
 
