@@ -56,9 +56,9 @@ Example: r rename userId to id in User class
 - CQS (command and query separation): a function should either just calculate and return something thus be a query, or be void but therefor do something and have a side-effect, but never both.
 
 ## Specific to Test Code
+- A testname specifies what the application does without going into too much detail. The name describes a fact. The name should not contain can/should/handle in its name.
 - Separate Arrange, Act and Assert by one line of whitespace
 - NEVER use a block syntax structure such as Loops or .Where() in a Test. The test has only one path and it knows the expected outcome. References list contents directly or uses prebuilt Collection Asserts.
 - Don't use Assert.Multiple. Each Assert stands on its own on its own line.
 - Test readability trumps code reuse!  
   - Keep test data inline when the data structure IS what's being tested.
-- NEVER use should in a test name. A test specifies what the code DOES (those are facts), not what it should do.
