@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🟢
 
 ## Open Scenarios
 
@@ -21,6 +21,14 @@ Test ExpressionExtractionTarget with proper type inference for .ToList() express
 // Test case: ExpressionExtractionTarget should infer correct generic type for .ToList()
 var numbers = new[] { 1, 2, 3 };
 var result = numbers.ToList(); // Should infer List<int>, not hardcoded List<string>
+```
+
+### ToListTypeInferenceStrategy Hardcoded Fallback - DRAFT
+Test ToListTypeInferenceStrategy when it cannot infer the element type and falls back to hardcoded "List<string>".
+```csharp
+// Test case: ToListTypeInferenceStrategy with unknown collection type should use better fallback
+var unknownCollection = GetUnknownCollection(); // Returns some IEnumerable without type info
+var result = unknownCollection.ToList(); // Should infer List<object> instead of hardcoded List<string>
 ```
 
 ### ExtractMethod Error Conditions - DRAFT
