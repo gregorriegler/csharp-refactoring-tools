@@ -26,7 +26,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         }
 
         var typeName = expressionType.ToDisplayString();
-        if (typeName != "?" && !string.IsNullOrEmpty(typeName))
+        if (IsValidTypeName(typeName))
         {
             return SyntaxFactory.ParseTypeName(typeName);
         }
@@ -41,7 +41,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
         {
             var returnTypeName = methodSymbol.ReturnType.ToDisplayString();
-            if (returnTypeName != "?" && !string.IsNullOrEmpty(returnTypeName))
+            if (IsValidTypeName(returnTypeName))
             {
                 return SyntaxFactory.ParseTypeName(returnTypeName);
             }
@@ -119,6 +119,11 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         }
 
         return selectedExpression;
+    }
+
+    private static bool IsValidTypeName(string typeName)
+    {
+        return typeName != "?" && !string.IsNullOrEmpty(typeName);
     }
 
 }
