@@ -9,7 +9,6 @@ public class InlineMethodTests
 {
 
     [Test]
-    [Ignore("debug")]
     public async Task InlineSimple()
     {
         const string code = """
