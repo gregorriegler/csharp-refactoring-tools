@@ -1,6 +1,6 @@
 # Answering Rules
-ALWAYS start your answers with a STARTING_CHARACTER
-The default STARTING_CHARACTER is 🐙
+ALWAYS start your answers with a STARTER_SYMBOL
+The default STARTER_SYMBOL is 🐙
 
 Whenever you need to stop, continue, or have a question for me, notify me using the `say.py` script using `./say.py "<your message>"
 
