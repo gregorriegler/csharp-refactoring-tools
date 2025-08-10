@@ -8,6 +8,14 @@ namespace RoslynRefactoring.Tests;
 [TestFixture]
 public class TypeInferrerTests
 {
+    private TypeInferrer typeInferrer;
+
+    [SetUp]
+    public void SetUp()
+    {
+        typeInferrer = new TypeInferrer();
+    }
+
     [Test]
     public void InferType_WithAwaitErrorType_ShouldReturnObjectInsteadOfString()
     {
@@ -21,16 +29,7 @@ public class TestClass
     }
 }";
 
-        var document = DocumentTestHelper.CreateDocument(code);
-        var root = document.GetSyntaxRootAsync().Result!;
-        var semanticModel = document.GetSemanticModelAsync().Result!;
-
-        var awaitExpression = root.DescendantNodes()
-            .OfType<AwaitExpressionSyntax>()
-            .First();
-
-        var typeInferrer = new TypeInferrer();
-        var result = typeInferrer.InferType(awaitExpression, semanticModel);
+        var result = InferTypeFromAwaitExpression(code);
 
         Assert.That(result, Is.EqualTo("object"));
     }
@@ -48,16 +47,7 @@ public class TestClass
     }
 }";
 
-        var document = DocumentTestHelper.CreateDocument(code);
-        var root = document.GetSyntaxRootAsync().Result!;
-        var semanticModel = document.GetSemanticModelAsync().Result!;
-
-        var awaitExpression = root.DescendantNodes()
-            .OfType<AwaitExpressionSyntax>()
-            .First();
-
-        var typeInferrer = new TypeInferrer();
-        var result = typeInferrer.InferType(awaitExpression, semanticModel);
+        var result = InferTypeFromAwaitExpression(code);
 
         Assert.That(result, Is.EqualTo("int"));
     }
@@ -78,20 +68,34 @@ public class TestClass
     }
 }";
 
-        var document = DocumentTestHelper.CreateDocument(code);
-        var root = document.GetSyntaxRootAsync().Result!;
-        var semanticModel = document.GetSemanticModelAsync().Result!;
+        var result = ResolveTypeForForeachVariable(code);
 
-        var foreachStatement = root.DescendantNodes()
-            .OfType<ForEachStatementSyntax>()
-            .First();
+        Assert.That(result, Is.EqualTo("var"));
+    }
 
+    private string InferTypeFromAwaitExpression(string code)
+    {
+        var (root, semanticModel) = CreateSyntaxTreeAndModel(code);
+        var awaitExpression = root.DescendantNodes().OfType<AwaitExpressionSyntax>().First();
+
+        return typeInferrer.InferType(awaitExpression, semanticModel);
+    }
+
+    private string ResolveTypeForForeachVariable(string code)
+    {
+        var (root, semanticModel) = CreateSyntaxTreeAndModel(code);
+        var foreachStatement = root.DescendantNodes().OfType<ForEachStatementSyntax>().First();
         var containingBlock = foreachStatement.Statement as BlockSyntax;
         var localSymbol = semanticModel.GetDeclaredSymbol(foreachStatement) as ILocalSymbol;
 
-        var typeInferrer = new TypeInferrer();
-        var result = typeInferrer.ResolveActualTypeForForeachVariable(localSymbol!, containingBlock!, semanticModel);
+        return typeInferrer.ResolveActualTypeForForeachVariable(localSymbol!, containingBlock!, semanticModel);
+    }
 
-        Assert.That(result, Is.EqualTo("var"));
+    private (SyntaxNode root, SemanticModel semanticModel) CreateSyntaxTreeAndModel(string code)
+    {
+        var document = DocumentTestHelper.CreateDocument(code);
+        var root = document.GetSyntaxRootAsync().Result!;
+        var semanticModel = document.GetSemanticModelAsync().Result!;
+        return (root, semanticModel);
     }
 }
