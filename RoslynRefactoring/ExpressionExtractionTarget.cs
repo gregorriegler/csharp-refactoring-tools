@@ -34,52 +34,23 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         return TryInferTypeFromExpression();
     }
 
-    private TypeSyntax InferToListType()
-    {
-        if (selectedExpression is InvocationExpressionSyntax invocation &&
-            invocation.Expression is MemberAccessExpressionSyntax memberAccess)
-        {
-            var collectionExpression = memberAccess.Expression;
-            var collectionTypeInfo = semanticModel.GetTypeInfo(collectionExpression);
-
-            if (collectionTypeInfo.Type is IArrayTypeSymbol arrayType)
-            {
-                var elementType = arrayType.ElementType.ToDisplayString();
-                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
-            }
-
-            if (collectionTypeInfo.Type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
-            {
-                var elementType = namedType.TypeArguments[0].ToDisplayString();
-                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
-            }
-        }
-
-        return SyntaxFactory.ParseTypeName("List<string>");
-    }
-
     private TypeSyntax TryInferTypeFromExpression()
     {
-        var symbolInfo = semanticModel.GetSymbolInfo(selectedExpression);
-
-        if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
+        var strategies = new List<IExpressionTypeInferenceStrategy>
         {
-            var returnTypeName = methodSymbol.ReturnType.ToDisplayString();
-            if (IsValidTypeName(returnTypeName))
+            new MethodSymbolTypeInferenceStrategy(),
+            new ToListTypeInferenceStrategy(),
+            new MathMaxTypeInferenceStrategy(),
+            new DefaultTypeInferenceStrategy()
+        };
+
+        foreach (var strategy in strategies)
+        {
+            var result = strategy.InferType(selectedExpression, semanticModel);
+            if (result != null)
             {
-                return SyntaxFactory.ParseTypeName(returnTypeName);
+                return result;
             }
-        }
-
-        var expressionText = selectedExpression.ToString();
-        if (expressionText.Contains(".ToList()"))
-        {
-            return InferToListType();
-        }
-
-        if (expressionText.StartsWith("Math.Max"))
-        {
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
         }
 
         return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));

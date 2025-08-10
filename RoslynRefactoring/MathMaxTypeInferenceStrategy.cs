@@ -13,7 +13,7 @@ public sealed class MathMaxTypeInferenceStrategy : IExpressionTypeInferenceStrat
             return null;
         }
 
-        return SyntaxFactory.ParseTypeName("int");
+        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword));
     }
 
     private static bool IsMathMaxInvocation(ExpressionSyntax expression, SemanticModel semanticModel)
