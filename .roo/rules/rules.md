@@ -61,3 +61,4 @@ Example: r rename userId to id in User class
 - Don't use Assert.Multiple. Each Assert stands on its own on its own line.
 - Test readability trumps code reuse!  
   - Keep test data inline when the data structure IS what's being tested.
+- NEVER use should in a test name. A test specifies what the code DOES, not what it should do.
