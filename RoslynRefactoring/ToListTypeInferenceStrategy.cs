@@ -43,13 +43,16 @@ public sealed class ToListTypeInferenceStrategy : IExpressionTypeInferenceStrate
             return false;
         }
 
+        // First try semantic model approach
         var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-        if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+        if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
         {
-            return false;
+            return methodSymbol.Name == "ToList" &&
+                   methodSymbol.ContainingType?.ToDisplayString() == "System.Linq.Enumerable";
         }
 
-        return methodSymbol.Name == "ToList" &&
-               methodSymbol.ContainingType?.ToDisplayString() == "System.Linq.Enumerable";
+        // Fallback to string-based pattern matching when semantic model fails
+        var expressionText = expression.ToString();
+        return expressionText.EndsWith(".ToList()");
     }
 }

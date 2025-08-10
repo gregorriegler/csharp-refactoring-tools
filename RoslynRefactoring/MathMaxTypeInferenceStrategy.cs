@@ -24,13 +24,16 @@ public sealed class MathMaxTypeInferenceStrategy : IExpressionTypeInferenceStrat
             return false;
         }
 
+        // First try semantic model approach
         var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-        if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+        if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
         {
-            return false;
+            return methodSymbol.Name == "Max" &&
+                   methodSymbol.ContainingType?.ToDisplayString() == "System.Math";
         }
 
-        return methodSymbol.Name == "Max" &&
-               methodSymbol.ContainingType?.ToDisplayString() == "System.Math";
+        // Fallback to string-based pattern matching when semantic model fails
+        var expressionText = expression.ToString();
+        return expressionText.StartsWith("Math.Max(") && expressionText.EndsWith(")");
     }
 }
