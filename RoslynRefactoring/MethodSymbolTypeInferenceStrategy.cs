@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace RoslynRefactoring;
 
-public sealed class MethodSymbolTypeInferenceStrategy : ITypeInferrer
+internal sealed class MethodSymbolTypeInferenceStrategy : ITypeInferrer
 {
     public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {

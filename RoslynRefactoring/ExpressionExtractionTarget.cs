@@ -36,20 +36,12 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
 
     private TypeSyntax TryInferTypeFromExpression()
     {
-        var strategies = new List<ITypeInferrer>
-        {
-            new MethodSymbolTypeInferenceStrategy(),
-            new ToListTypeInferenceStrategy(),
-            new DefaultTypeInferenceStrategy()
-        };
+        var typeInferrer = new TypeInferrer();
+        var result = typeInferrer.InferType(selectedExpression, semanticModel);
 
-        foreach (var strategy in strategies)
+        if (result != null)
         {
-            var result = strategy.InferType(selectedExpression, semanticModel);
-            if (result != null)
-            {
-                return SyntaxFactory.ParseTypeName(result);
-            }
+            return SyntaxFactory.ParseTypeName(result);
         }
 
         return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
