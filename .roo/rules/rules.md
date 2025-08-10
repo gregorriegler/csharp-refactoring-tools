@@ -44,3 +44,5 @@ Hypothesize first and prove your hypothesis before taking action.
 - Separate Arrange, Act and Assert by one line of whitespace
 - NEVER use a block syntax structure such as Loops or .Where() in a Test. The test has only one path and it knows the expected outcome. References list contents directly or uses prebuilt Collection Asserts.
 - Don't use Assert.Multiple. Each Assert stands on its own on its own line.
+- Test readability trumps code reuse!  
+  - Keep test data inline when the data structure IS what's being tested.
