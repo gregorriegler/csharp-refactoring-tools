@@ -9,12 +9,13 @@ public class ExtractMethodErrorCasesTests
     [Test]
     public async Task ShouldThrowWhenNoValidExtractionTargetFound()
     {
-        var documentWithoutBlock = CreateDocumentWithoutBlock();
+        var code = "class Test;";
+        var document = DocumentTestHelper.CreateDocument(code);
         var extractMethod = ExtractMethod.Create(["1:1-1:1", "TestMethod"]);
 
         try
         {
-            await extractMethod.PerformAsync(documentWithoutBlock);
+            await extractMethod.PerformAsync(document);
             Assert.Fail("Expected InvalidOperationException was not thrown");
         }
         catch (InvalidOperationException ex)
@@ -26,12 +27,13 @@ public class ExtractMethodErrorCasesTests
     [Test]
     public async Task ShouldThrowWhenNoContainingBlock()
     {
-        var documentWithoutBlock = CreateDocumentWithoutBlock();
+        var code = "class Test;";
+        var document = DocumentTestHelper.CreateDocument(code);
         var extractMethod = ExtractMethod.Create(["1:7-1:11", "TestMethod"]);
 
         try
         {
-            await extractMethod.PerformAsync(documentWithoutBlock);
+            await extractMethod.PerformAsync(document);
             Assert.Fail("Expected InvalidOperationException was not thrown");
         }
         catch (InvalidOperationException ex)
@@ -40,25 +42,15 @@ public class ExtractMethodErrorCasesTests
         }
     }
 
-    private static Document CreateEmptyDocument()
-    {
-        var code = "";
-        return DocumentTestHelper.CreateDocument(code);
-    }
-
-    private static Document CreateDocumentWithoutBlock()
-    {
-        var code = "class Test;";
-        return DocumentTestHelper.CreateDocument(code);
-    }
     [Test]
     public async Task ShouldReturnOriginalDocumentWhenNoValidExtractionTargetFound()
     {
-        var emptyDocument = CreateEmptyDocument();
+        var code = "";
+        var document = DocumentTestHelper.CreateDocument(code);
         var extractMethod = ExtractMethod.Create(["1:1-1:1", "TestMethod"]);
 
-        var result = await extractMethod.PerformAsync(emptyDocument);
+        var result = await extractMethod.PerformAsync(document);
 
-        Assert.That(result, Is.EqualTo(emptyDocument));
+        Assert.That(result, Is.EqualTo(document));
     }
 }
