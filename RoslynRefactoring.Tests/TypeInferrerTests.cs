@@ -61,4 +61,37 @@ public class TestClass
 
         Assert.That(result, Is.EqualTo("int"));
     }
+
+    [Test]
+    public void ResolveActualTypeForForeachVariable_WithNoMethodBlock_ShouldReturnVar()
+    {
+        var code = @"
+public class TestClass
+{
+    public void TestMethod()
+    {
+        var items = new[] { 1, 2, 3 };
+        foreach (var item in items)
+        {
+            // some code
+        }
+    }
+}";
+
+        var document = DocumentTestHelper.CreateDocument(code);
+        var root = document.GetSyntaxRootAsync().Result!;
+        var semanticModel = document.GetSemanticModelAsync().Result!;
+
+        var foreachStatement = root.DescendantNodes()
+            .OfType<ForEachStatementSyntax>()
+            .First();
+
+        var containingBlock = foreachStatement.Statement as BlockSyntax;
+        var localSymbol = semanticModel.GetDeclaredSymbol(foreachStatement) as ILocalSymbol;
+
+        var typeInferrer = new TypeInferrer();
+        var result = typeInferrer.ResolveActualTypeForForeachVariable(localSymbol!, containingBlock!, semanticModel);
+
+        Assert.That(result, Is.EqualTo("var"));
+    }
 }
