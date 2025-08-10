@@ -50,7 +50,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         var expressionText = selectedExpression.ToString();
         if (expressionText.Contains(".ToList()"))
         {
-            return SyntaxFactory.ParseTypeName("List<string>");
+            return InferToListType();
         }
 
         if (expressionText.StartsWith("Math.Max"))
@@ -59,6 +59,30 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
         }
 
         return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+    }
+
+    private TypeSyntax InferToListType()
+    {
+        if (selectedExpression is InvocationExpressionSyntax invocation &&
+            invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var collectionExpression = memberAccess.Expression;
+            var collectionTypeInfo = semanticModel.GetTypeInfo(collectionExpression);
+
+            if (collectionTypeInfo.Type is IArrayTypeSymbol arrayType)
+            {
+                var elementType = arrayType.ElementType.ToDisplayString();
+                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
+            }
+
+            if (collectionTypeInfo.Type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
+            {
+                var elementType = namedType.TypeArguments[0].ToDisplayString();
+                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
+            }
+        }
+
+        return SyntaxFactory.ParseTypeName("List<string>");
     }
 
     protected override BlockSyntax CreateMethodBody()

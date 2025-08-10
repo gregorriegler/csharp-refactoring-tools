@@ -1,6 +1,6 @@
 # ExtractMethod Refactoring - Missing Cases and Improvements
 
-## TDD Phase: 🔴
+## TDD Phase: 🧹
 
 ## Open Scenarios
 
@@ -13,6 +13,14 @@ Test ExtractMethod when no valid extraction target found.
 var extractMethod = ExtractMethod.Create(["1:1-1:1"]);
 var result = await extractMethod.PerformAsync(emptyDocument);
 // Should handle gracefully when no extraction possible
+```
+
+### ExpressionExtractionTarget ToList Type Inference - ✅ COMPLETED
+Test ExpressionExtractionTarget with proper type inference for .ToList() expressions instead of hardcoded "List<string>".
+```csharp
+// Test case: ExpressionExtractionTarget should infer correct generic type for .ToList()
+var numbers = new[] { 1, 2, 3 };
+var result = numbers.ToList(); // Should infer List<int>, not hardcoded List<string>
 ```
 
 ### ExtractMethod Error Conditions - DRAFT
