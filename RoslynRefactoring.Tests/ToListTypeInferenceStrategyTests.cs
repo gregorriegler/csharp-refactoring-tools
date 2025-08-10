@@ -95,7 +95,7 @@ public class TestClass
     }
 
     [Test]
-    public void InferType_WithFallbackCase_ShouldReturnListOfString()
+    public void InferType_WithFallbackCase_ShouldReturnListOfObject()
     {
         var code = @"
 using System.Linq;
@@ -112,7 +112,7 @@ public class TestClass
 
         var result = InferTypeFromToListExpression(code);
 
-        Assert.That(result, Is.EqualTo("List<string>"));
+        Assert.That(result, Is.EqualTo("List<object>"));
     }
 
     [Test]

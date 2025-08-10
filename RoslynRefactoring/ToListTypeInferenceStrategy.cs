@@ -30,6 +30,12 @@ public sealed class ToListTypeInferenceStrategy : IExpressionTypeInferenceStrate
                 var elementType = namedType.TypeArguments[0].ToDisplayString();
                 return SyntaxFactory.ParseTypeName($"List<{elementType}>");
             }
+
+            // If the collection type is object, return List<object>
+            if (collectionTypeInfo.Type?.SpecialType == SpecialType.System_Object)
+            {
+                return SyntaxFactory.ParseTypeName("List<object>");
+            }
         }
 
         return SyntaxFactory.ParseTypeName("List<string>");
