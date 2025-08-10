@@ -5,5 +5,5 @@ namespace RoslynRefactoring;
 
 public interface ITypeInferrer
 {
-    TypeSyntax? InferType(ExpressionSyntax expression, SemanticModel semanticModel);
+    string? InferType(ExpressionSyntax expression, SemanticModel semanticModel);
 }

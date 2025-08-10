@@ -6,8 +6,8 @@ namespace RoslynRefactoring;
 
 public sealed class DefaultTypeInferenceStrategy : ITypeInferrer
 {
-    public TypeSyntax? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
-        return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+        return "object";
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace RoslynRefactoring;
 
-public sealed class TypeInferrer
+public sealed class TypeInferrer : ITypeInferrer
 {
     private const string StringType = "string";
     private const string ObjectType = "object";
@@ -21,7 +21,7 @@ public sealed class TypeInferrer
         };
     }
 
-    public string InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         if (expression is AwaitExpressionSyntax awaitExpr)
         {
@@ -55,7 +55,7 @@ public sealed class TypeInferrer
             var result = strategy.InferType(expression, semanticModel);
             if (result != null)
             {
-                return result.ToString();
+                return result;
             }
         }
 

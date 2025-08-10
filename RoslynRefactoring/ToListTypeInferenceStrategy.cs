@@ -6,7 +6,7 @@ namespace RoslynRefactoring;
 
 public sealed class ToListTypeInferenceStrategy : ITypeInferrer
 {
-    public TypeSyntax? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         if (!IsToListInvocation(expression, semanticModel))
         {
@@ -22,23 +22,22 @@ public sealed class ToListTypeInferenceStrategy : ITypeInferrer
             if (collectionTypeInfo.Type is IArrayTypeSymbol arrayType)
             {
                 var elementType = arrayType.ElementType.ToDisplayString();
-                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
+                return $"List<{elementType}>";
             }
 
             if (collectionTypeInfo.Type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
             {
                 var elementType = namedType.TypeArguments[0].ToDisplayString();
-                return SyntaxFactory.ParseTypeName($"List<{elementType}>");
+                return $"List<{elementType}>";
             }
 
-            // If the collection type is object, return List<object>
             if (collectionTypeInfo.Type?.SpecialType == SpecialType.System_Object)
             {
-                return SyntaxFactory.ParseTypeName("List<object>");
+                return "List<object>";
             }
         }
 
-        return SyntaxFactory.ParseTypeName("List<string>");
+        return "List<string>";
     }
 
     private static bool IsToListInvocation(ExpressionSyntax expression, SemanticModel semanticModel)

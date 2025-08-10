@@ -6,7 +6,7 @@ namespace RoslynRefactoring;
 
 public sealed class MethodSymbolTypeInferenceStrategy : ITypeInferrer
 {
-    public TypeSyntax? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
+    public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         var symbolInfo = semanticModel.GetSymbolInfo(expression);
 
@@ -15,7 +15,7 @@ public sealed class MethodSymbolTypeInferenceStrategy : ITypeInferrer
             var returnTypeName = methodSymbol.ReturnType.ToDisplayString();
             if (IsValidTypeName(returnTypeName))
             {
-                return SyntaxFactory.ParseTypeName(returnTypeName);
+                return returnTypeName;
             }
         }
 

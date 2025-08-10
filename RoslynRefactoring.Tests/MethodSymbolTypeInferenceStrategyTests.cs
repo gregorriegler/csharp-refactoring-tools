@@ -219,10 +219,10 @@ public class TestClass
             .First(inv => inv.ToString().Contains(methodName));
 
         var result = strategy.InferType(methodInvocation, semanticModel);
-        return result?.ToString() ?? "null";
+        return result ?? "null";
     }
 
-    private TypeSyntax? InferTypeFromNonMethodExpression(string code)
+    private string? InferTypeFromNonMethodExpression(string code)
     {
         var (root, semanticModel) = CreateSyntaxTreeAndModel(code);
         var literalExpression = root.DescendantNodes()

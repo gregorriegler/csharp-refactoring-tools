@@ -78,7 +78,7 @@ public class TestClass
         var (root, semanticModel) = CreateSyntaxTreeAndModel(code);
         var awaitExpression = root.DescendantNodes().OfType<AwaitExpressionSyntax>().First();
 
-        return typeInferrer.InferType(awaitExpression, semanticModel);
+        return typeInferrer.InferType(awaitExpression, semanticModel) ?? "null";
     }
 
     private string ResolveTypeForForeachVariable(string code)

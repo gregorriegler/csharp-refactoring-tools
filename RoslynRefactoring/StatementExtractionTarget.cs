@@ -98,7 +98,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 ? lastLocalDecl.Declaration.Type
                 : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         var inferredType = typeInferrer.InferType(variable.Initializer.Value, semanticModel);
-        return SyntaxFactory.ParseTypeName(inferredType);
+        return SyntaxFactory.ParseTypeName(inferredType ?? "object");
 
     }
 
@@ -140,7 +140,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 var variable = localDecl.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == variableName);
                 if (variable?.Initializer?.Value != null)
                 {
-                    return typeInferrer.InferType(variable.Initializer.Value, semanticModel);
+                    return typeInferrer.InferType(variable.Initializer.Value, semanticModel) ?? "object";
                 }
             }
         }

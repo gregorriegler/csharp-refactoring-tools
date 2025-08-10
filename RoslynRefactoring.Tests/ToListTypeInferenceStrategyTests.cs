@@ -161,10 +161,10 @@ public class TestClass
             .First(inv => inv.ToString().Contains("ToList"));
 
         var result = strategy.InferType(toListInvocation, semanticModel);
-        return result?.ToString() ?? "null";
+        return result ?? "null";
     }
 
-    private TypeSyntax? InferTypeFromNonToListExpression(string code)
+    private string? InferTypeFromNonToListExpression(string code)
     {
         var (root, semanticModel) = CreateSyntaxTreeAndModel(code);
         var invocation = root.DescendantNodes()

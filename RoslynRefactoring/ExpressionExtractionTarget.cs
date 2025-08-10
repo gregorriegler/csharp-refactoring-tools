@@ -48,7 +48,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
             var result = strategy.InferType(selectedExpression, semanticModel);
             if (result != null)
             {
-                return result;
+                return SyntaxFactory.ParseTypeName(result);
             }
         }
 
