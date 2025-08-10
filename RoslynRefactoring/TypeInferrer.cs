@@ -9,11 +9,11 @@ public sealed class TypeInferrer
     private const string StringType = "string";
     private const string ObjectType = "object";
 
-    private readonly List<IExpressionTypeInferenceStrategy> strategies;
+    private readonly List<ITypeInferrer> strategies;
 
     public TypeInferrer()
     {
-        strategies = new List<IExpressionTypeInferenceStrategy>
+        strategies = new List<ITypeInferrer>
         {
             new ToListTypeInferenceStrategy(),
             new MethodSymbolTypeInferenceStrategy(),

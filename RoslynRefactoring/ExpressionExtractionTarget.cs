@@ -36,7 +36,7 @@ public sealed class ExpressionExtractionTarget(ExpressionSyntax selectedExpressi
 
     private TypeSyntax TryInferTypeFromExpression()
     {
-        var strategies = new List<IExpressionTypeInferenceStrategy>
+        var strategies = new List<ITypeInferrer>
         {
             new MethodSymbolTypeInferenceStrategy(),
             new ToListTypeInferenceStrategy(),
