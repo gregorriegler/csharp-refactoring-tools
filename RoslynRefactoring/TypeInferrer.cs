@@ -1,25 +1,14 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
 
 namespace RoslynRefactoring;
 
-public sealed class TypeInferrer : ITypeInferrer
+public sealed class TypeInferrer
 {
     private const string StringType = "string";
     private const string ObjectType = "object";
-
-    private readonly List<ITypeInferrer> strategies;
-
-    public TypeInferrer()
-    {
-        strategies = new List<ITypeInferrer>
-        {
-            new ToListTypeInferenceStrategy(),
-            new MethodSymbolTypeInferenceStrategy(),
-            new DefaultTypeInferenceStrategy()
-        };
-    }
 
     public string? InferType(ExpressionSyntax expression, SemanticModel semanticModel)
     {
@@ -45,21 +34,103 @@ public sealed class TypeInferrer : ITypeInferrer
             return regularTypeInfo.Type.ToDisplayString();
         }
 
-        return InferTypeUsingStrategies(expression, semanticModel);
+        return InferTypeUsingInlinedStrategies(expression, semanticModel);
     }
 
-    private string InferTypeUsingStrategies(ExpressionSyntax expression, SemanticModel semanticModel)
+    private string InferTypeUsingInlinedStrategies(ExpressionSyntax expression, SemanticModel semanticModel)
     {
-        foreach (var strategy in strategies)
+        // ToList strategy
+        var toListResult = TryInferToListType(expression, semanticModel);
+        if (toListResult != null)
         {
-            var result = strategy.InferType(expression, semanticModel);
-            if (result != null)
+            return toListResult;
+        }
+
+        // Method symbol strategy
+        var methodSymbolResult = TryInferMethodSymbolType(expression, semanticModel);
+        if (methodSymbolResult != null)
+        {
+            return methodSymbolResult;
+        }
+
+        // Default fallback
+        return ObjectType;
+    }
+
+    private string? TryInferToListType(ExpressionSyntax expression, SemanticModel semanticModel)
+    {
+        if (!IsToListInvocation(expression, semanticModel))
+        {
+            return null;
+        }
+
+        if (expression is InvocationExpressionSyntax invocation &&
+            invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var collectionExpression = memberAccess.Expression;
+            var collectionTypeInfo = semanticModel.GetTypeInfo(collectionExpression);
+
+            if (collectionTypeInfo.Type is IArrayTypeSymbol arrayType)
             {
-                return result;
+                var elementType = arrayType.ElementType.ToDisplayString();
+                return $"List<{elementType}>";
+            }
+
+            if (collectionTypeInfo.Type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
+            {
+                var elementType = namedType.TypeArguments[0].ToDisplayString();
+                return $"List<{elementType}>";
+            }
+
+            if (collectionTypeInfo.Type?.SpecialType == SpecialType.System_Object)
+            {
+                return "List<object>";
             }
         }
 
-        return ObjectType;
+        return "List<string>";
+    }
+
+    private static bool IsToListInvocation(ExpressionSyntax expression, SemanticModel semanticModel)
+    {
+        if (expression is not InvocationExpressionSyntax invocation ||
+            invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+        {
+            return false;
+        }
+
+        // First try semantic model approach
+        var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+        if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+        {
+            return methodSymbol.Name == "ToList" &&
+                   methodSymbol.ContainingType?.ToDisplayString() == "System.Linq.Enumerable";
+        }
+
+        // Fallback to string-based pattern matching when semantic model fails
+        var expressionText = expression.ToString();
+        return expressionText.EndsWith(".ToList()");
+    }
+
+    private string? TryInferMethodSymbolType(ExpressionSyntax expression, SemanticModel semanticModel)
+    {
+        var symbolInfo = semanticModel.GetSymbolInfo(expression);
+
+        if (symbolInfo.Symbol is IMethodSymbol methodSymbol && methodSymbol.ReturnType != null)
+        {
+            var returnTypeName = methodSymbol.ReturnType.ToDisplayString();
+            if (IsValidTypeName(returnTypeName))
+            {
+                return returnTypeName;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsValidTypeName(string typeName)
+    {
+        return typeName != "?" && !string.IsNullOrEmpty(typeName);
     }
 
     private bool IsErrorTypeExpression(ExpressionSyntax expression, SemanticModel semanticModel)
