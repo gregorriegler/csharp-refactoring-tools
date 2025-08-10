@@ -31,6 +31,7 @@ f/F - Feature (small/large)
 b/B - Bug fix (small/large)
 r/R/R!! - Refactor (safe/risky/dangerous)
 t - Test (always safe)
+d - Documentation (no code change)
 
 Example: r rename userId to id in User class
 
