@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class RenameSymbolTests
 {
     [Test]
-    public async Task CanRenameUnusedLocalVariable()
+    public async Task RenameUnusedLocalVariable()
     {
         var code = @"
 public class Test
@@ -24,7 +24,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameVariableWithOneUsage()
+    public async Task RenameVariableWithOneUsage()
     {
         var code = @"
 public class Test
@@ -40,7 +40,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameVariableWithManyUsages()
+    public async Task RenameVariableWithManyUsages()
     {
         var code = @"
 public class Test
@@ -58,7 +58,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameVariableInDifferentScopes()
+    public async Task RenameVariableInDifferentScopes()
     {
         var code = @"
 public class Test
@@ -78,7 +78,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameVariableInLoop()
+    public async Task RenameVariableInLoop()
     {
         var code = @"
 public class Test
@@ -96,7 +96,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameUnusedPrivateMethod()
+    public async Task RenameUnusedPrivateMethod()
     {
         var code = @"
 public class Test
@@ -116,7 +116,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenamePrivateMethodWithOneUsage()
+    public async Task RenamePrivateMethodWithOneUsage()
     {
         var code = @"
 public class Test
@@ -136,7 +136,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenamePrivateMethodWithManyUsages()
+    public async Task RenamePrivateMethodWithManyUsages()
     {
         var code = @"
 public class Test
@@ -160,7 +160,7 @@ public class Test
     }
 
     [Test]
-    public async Task CanRenameMethodWithParameters()
+    public async Task RenameMethodWithParameters()
     {
         var code = @"
 public class Test

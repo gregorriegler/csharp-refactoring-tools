@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractCollaboratorInterfaceTests
 {
     [Test]
-    public async Task HandleZeroCollaborators()
+    public async Task ExtractCollaboratorInterfaceWithZeroCollaborators()
     {
         const string code = """
                             public class OrderService
@@ -24,7 +24,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandleOneCollaboratorOneMethod()
+    public async Task ExtractCollaboratorInterfaceWithOneCollaboratorOneMethod()
     {
         const string code = """
                             public class OrderService
@@ -47,7 +47,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandleOneCollaboratorOneProperty()
+    public async Task ExtractCollaboratorInterfaceWithOneCollaboratorOneProperty()
     {
         const string code = """
                             public class OrderService
@@ -70,7 +70,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandleOneCollaboratorMultipleMembers()
+    public async Task ExtractCollaboratorInterfaceWithOneCollaboratorMultipleMembers()
     {
         const string code = """
                             public class OrderService
@@ -94,7 +94,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandleCollaboratorWithExistingInterface()
+    public async Task ExtractCollaboratorInterfaceWithExistingInterface()
     {
         const string code = """
                             public interface IPaymentProcessor
@@ -127,7 +127,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandlePropertyInjection()
+    public async Task ExtractCollaboratorInterfaceWithPropertyInjection()
     {
         const string code = """
                             public class OrderService
@@ -145,7 +145,7 @@ public class ExtractCollaboratorInterfaceTests
     }
 
     [Test]
-    public async Task HandleConstructorWithMultipleDependencies()
+    public async Task ExtractCollaboratorInterfaceWithConstructorWithMultipleDependencies()
     {
         const string code = """
                             public class OrderService

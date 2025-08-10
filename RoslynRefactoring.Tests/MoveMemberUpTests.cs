@@ -9,7 +9,7 @@ namespace RoslynRefactoring.Tests;
 public class MoveMemberUpTests
 {
     [Test]
-    public async Task CanMoveMethodWithZeroDependencies()
+    public async Task MoveMethodWithZeroDependencies()
     {
         var code = @"
 public class Animal

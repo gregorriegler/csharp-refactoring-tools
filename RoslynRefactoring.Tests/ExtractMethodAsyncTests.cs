@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodAsyncTests
 {
     [Test]
-    public async Task ShouldExtractAsyncMethodWithHttpClientCall()
+    public async Task ExtractAsyncMethodWithHttpClientCall()
     {
         const string code = """
             using System.Net.Http;

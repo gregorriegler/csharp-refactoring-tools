@@ -6,7 +6,7 @@ namespace RoslynRefactoring.Tests;
 public class RenameSymbolErrorHandlingTests
 {
     [Test]
-    public void ShouldReturnMeaningfulErrorWhenCursorIsOnWhitespace()
+    public void ReturnsMeaningfulErrorWhenCursorIsOnWhitespace()
     {
         var code = @"
 public class Test
@@ -32,7 +32,7 @@ public class Test
     }
 
     [Test]
-    public void ShouldReturnMeaningfulErrorWhenCursorIsOnUnsupportedSymbolType()
+    public void ReturnsMeaningfulErrorWhenCursorIsOnUnsupportedSymbolType()
     {
         var code = @"
 public class Test

@@ -6,7 +6,7 @@ namespace RoslynRefactoring.Tests;
 public class CodeSelectionTests
 {
     [Test]
-    public void IsInRange_WithSelectionBeyondFileBoundaries_ShouldReturnFalse()
+    public void IsInRange_WithSelectionBeyondFileBoundaries_ReturnsFalse()
     {
         var selection = CodeSelection.Parse("100:1-100:10");
         var fileText = SourceText.From("line 1\nline 2\nline 3");
@@ -18,7 +18,7 @@ public class CodeSelectionTests
     }
 
     [Test]
-    public void IsInRange_WithValidSelection_ShouldReturnTrue()
+    public void IsInRange_WithValidSelection_ReturnsTrue()
     {
         var selection = CodeSelection.Parse("2:1-3:5");
         var fileText = SourceText.From("line 1\nline 2\nline 3\nline 4");
@@ -30,13 +30,13 @@ public class CodeSelectionTests
     }
 
     [Test]
-    public void Parse_WithInvalidFormat_ShouldThrowInvalidOperationException()
+    public void Parse_WithInvalidFormat_ThrowsInvalidOperationException()
     {
         Assert.Throws<InvalidOperationException>(() => CodeSelection.Parse("1:1:1-2:2"));
     }
 
     [Test]
-    public void Create_WithInvalidLineNumbers_ShouldThrowInvalidOperationException()
+    public void Create_WithInvalidLineNumbers_ThrowsInvalidOperationException()
     {
         var invalidCursor = new Cursor(0, 1);
         var validCursor = new Cursor(1, 1);
@@ -45,13 +45,13 @@ public class CodeSelectionTests
     }
 
     [Test]
-    public void CursorParse_WithInvalidFormat_ShouldThrowInvalidOperationException()
+    public void CursorParse_WithInvalidFormat_ThrowsInvalidOperationException()
     {
         Assert.Throws<InvalidOperationException>(() => Cursor.Parse("invalid:format:extra"));
     }
 
     [Test]
-    public void CursorParse_WithNonNumericValues_ShouldThrowInvalidOperationException()
+    public void CursorParse_WithNonNumericValues_ThrowsInvalidOperationException()
     {
         Assert.Throws<InvalidOperationException>(() => Cursor.Parse("abc:def"));
     }

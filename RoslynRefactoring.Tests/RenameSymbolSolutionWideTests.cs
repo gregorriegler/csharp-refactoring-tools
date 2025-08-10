@@ -7,7 +7,7 @@ namespace RoslynRefactoring.Tests;
 public class RenameSymbolSolutionWideTests
 {
     [Test]
-    public void ShouldRenameMethodAcrossMultipleFiles()
+    public void RenameMethodAcrossMultipleFiles()
     {
         var file1Code = @"
 public class Calculator

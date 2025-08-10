@@ -17,7 +17,7 @@ public class TypeInferrerTests
     }
 
     [Test]
-    public void InferType_WithAwaitErrorType_ShouldReturnObjectInsteadOfString()
+    public void InferType_WithAwaitErrorType_ReturnsObjectInsteadOfString()
     {
         var code = @"
 using System.Threading.Tasks;
@@ -35,7 +35,7 @@ public class TestClass
     }
 
     [Test]
-    public void InferType_WithAwaitValidType_ShouldReturnTypeDisplayString()
+    public void InferType_WithAwaitValidType_ReturnsTypeDisplayString()
     {
         var code = @"
 using System.Threading.Tasks;
@@ -53,7 +53,7 @@ public class TestClass
     }
 
     [Test]
-    public void ResolveActualTypeForForeachVariable_WithNoMethodBlock_ShouldReturnVar()
+    public void ResolveActualTypeForForeachVariable_WithNoMethodBlock_ReturnsVar()
     {
         var code = @"
 public class TestClass

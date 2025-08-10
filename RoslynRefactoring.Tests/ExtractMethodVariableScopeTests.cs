@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodVariableScopeTests
 {
     [Test]
-    public async Task ShouldHandleVariableScopeConflicts()
+    public async Task ExtractMethodWithVariableScopeConflicts()
     {
         const string code = """
             public class TestClass

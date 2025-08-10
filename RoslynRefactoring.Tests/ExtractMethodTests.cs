@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodTests
 {
     [Test]
-    public async Task CanExtractReturn()
+    public async Task ExtractReturn()
     {
         var code = @"
 public class Calculator
@@ -23,7 +23,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractSimpleSwitchWithReturn()
+    public async Task ExtractSimpleSwitchWithReturn()
     {
         const string code = @"
 public class Bird
@@ -44,7 +44,7 @@ public class Bird
     }
 
     [Test]
-    public async Task CanExtractVoid()
+    public async Task ExtractVoid()
     {
         const string code = @"
 public class Console
@@ -59,7 +59,7 @@ public class Console
     }
 
     [Test]
-    public async Task CanExtractOnlyAPartThatReturns()
+    public async Task ExtractOnlyAPartThatReturns()
     {
         const string code = @"
 public class Calculator
@@ -75,7 +75,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractSwitchBodyWithReturn()
+    public async Task ExtractSwitchBodyWithReturn()
     {
         const string code = @"
 public class Bird
@@ -96,7 +96,7 @@ public class Bird
     }
 
     [Test]
-    public async Task CanExtractSingleVariable()
+    public async Task ExtractSingleVariable()
     {
         const string code = @"
 public class Calculator
@@ -112,7 +112,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractExpressionWithPrecedence()
+    public async Task ExtractExpressionWithPrecedence()
     {
         const string code = @"
 public class Calculator
@@ -130,7 +130,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractMethodCall()
+    public async Task ExtractMethodCall()
     {
         const string code = @"
 using System;
@@ -149,7 +149,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractNestedExpressions()
+    public async Task ExtractNestedExpressions()
     {
         const string code = @"
 using System;
@@ -168,7 +168,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractTwoStatements()
+    public async Task ExtractTwoStatements()
     {
         const string code = @"
 public class Calculator
@@ -184,7 +184,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractThreeStatementsWithLocalVariables()
+    public async Task ExtractThreeStatementsWithLocalVariables()
     {
         const string code = @"
 public class Calculator
@@ -201,7 +201,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractSingleReturnValueCalculation()
+    public async Task ExtractSingleReturnValueCalculation()
     {
         const string code = @"
 public class Calculator
@@ -221,7 +221,7 @@ public class Calculator
     }
 
     [Test]
-    public async Task CanExtractMethodCallChain()
+    public async Task ExtractMethodCallChain()
     {
         const string code = @"
 public class DataProcessor
@@ -249,7 +249,7 @@ public class DataItem
     }
 
     [Test]
-    public async Task CanExtractConditionalLogic()
+    public async Task ExtractConditionalLogic()
     {
         const string code = @"
 public class UserProcessor
@@ -280,7 +280,7 @@ public class User
     }
 
     [Test]
-    public async Task CanExtractLoopBody()
+    public async Task ExtractLoopBody()
     {
         const string code = @"
 public class ItemProcessor
@@ -307,7 +307,7 @@ public class Item
     }
 
     [Test]
-    public async Task CanExtractExceptionHandling()
+    public async Task ExtractExceptionHandling()
     {
         const string code = @"
 public class FileProcessor
@@ -338,7 +338,7 @@ public class FileProcessor
     }
 
     [Test]
-    public async Task CanExtractAsyncMethod()
+    public async Task ExtractAsyncMethod()
     {
         const string code = @"
 using System.Net.Http;
@@ -360,7 +360,7 @@ public class ApiClient
     }
 
     [Test]
-    public async Task CanExtractMultipleReturnValuesViaTuple()
+    public async Task ExtractMultipleReturnValuesViaTuple()
     {
         const string code = @"
 public class ValidationProcessor
@@ -382,7 +382,7 @@ public class ValidationProcessor
     }
 
     [Test]
-    public async Task CanExtractUnreachableCodeAfterReturn()
+    public async Task ExtractUnreachableCodeAfterReturn()
     {
         const string code = @"
 public class TestClass

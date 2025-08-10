@@ -7,7 +7,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodErrorCasesTests
 {
     [Test]
-    public async Task ShouldThrowWhenNoValidExtractionTargetFound()
+    public async Task ThrowsWhenNoValidExtractionTargetFound()
     {
         var code = "class Test;";
         var document = DocumentTestHelper.CreateDocument(code);
@@ -25,7 +25,7 @@ public class ExtractMethodErrorCasesTests
     }
 
     [Test]
-    public async Task ShouldThrowWhenNoContainingBlock()
+    public async Task ThrowsWhenNoContainingBlock()
     {
         var code = "class Test;";
         var document = DocumentTestHelper.CreateDocument(code);
@@ -43,7 +43,7 @@ public class ExtractMethodErrorCasesTests
     }
 
     [Test]
-    public async Task ShouldReturnOriginalDocumentWhenNoValidExtractionTargetFound()
+    public async Task ReturnsOriginalDocumentWhenNoValidExtractionTargetFound()
     {
         var code = "";
         var document = DocumentTestHelper.CreateDocument(code);

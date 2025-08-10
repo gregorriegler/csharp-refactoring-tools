@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExpressionExtractionTargetToListTests
 {
     [Test]
-    public async Task ShouldInferCorrectGenericTypeForToListOnIntegerArray()
+    public async Task InferCorrectGenericTypeForToListOnIntegerArray()
     {
         const string code = @"
 public class DataProcessor

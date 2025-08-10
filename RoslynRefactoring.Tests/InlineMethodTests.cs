@@ -10,7 +10,7 @@ public class InlineMethodTests
 
     [Test]
     [Ignore("debug")]
-    public async Task CanInlineSimple()
+    public async Task InlineSimple()
     {
         const string code = """
                             public class Calculator
@@ -31,7 +31,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodAcrossFiles()
+    public async Task InlineStaticMethodAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace CanInlineStaticMethodAcrossFiles.Utils
@@ -61,7 +61,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodWithOneParameterAcrossFiles()
+    public async Task InlineStaticMethodWithOneParameterAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils
@@ -92,7 +92,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodWithTwoParametersAcrossFiles()
+    public async Task InlineStaticMethodWithTwoParametersAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils
@@ -123,7 +123,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodWithBlockBodyAcrossFiles()
+    public async Task InlineStaticMethodWithBlockBodyAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils
@@ -157,7 +157,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodCalledMultipleTimesAcrossFiles()
+    public async Task InlineStaticMethodCalledMultipleTimesAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils
@@ -190,7 +190,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodWithFullyQualifiedNameAcrossFiles()
+    public async Task InlineStaticMethodWithFullyQualifiedNameAcrossFiles()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils
@@ -219,7 +219,7 @@ public class InlineMethodTests
     }
 
     [Test]
-    public async Task CanInlineStaticMethodInDifferentNamespaceRequiringUsingStatement()
+    public async Task InlineStaticMethodInDifferentNamespaceRequiringUsingStatement()
     {
         const string mathHelperCode = """
                                       namespace MyProject.Utils

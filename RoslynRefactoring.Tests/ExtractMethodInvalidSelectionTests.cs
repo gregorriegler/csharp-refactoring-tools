@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodInvalidSelectionTests
 {
     [Test]
-    public async Task ShouldHandleInvalidSelectionCrossingStatementBoundaries()
+    public async Task ExtractMethodWithInvalidSelectionCrossingStatementBoundaries()
     {
         var code = """
             public class TestClass
@@ -39,7 +39,7 @@ public class ExtractMethodInvalidSelectionTests
     }
 
     [Test]
-    public async Task ShouldHandleInvalidSelectionFromMiddleOfParameterToNextStatement()
+    public async Task ExtractMethodWithInvalidSelectionFromMiddleOfParameterToNextStatement()
     {
         var code = """
             public class TestClass
@@ -64,7 +64,7 @@ public class ExtractMethodInvalidSelectionTests
     }
 
     [Test]
-    public async Task ShouldHandleMissingVariableDependencies()
+    public async Task ExtractMethodWithMissingVariableDependencies()
     {
         var code = """
             public class TestClass

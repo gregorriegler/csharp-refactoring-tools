@@ -10,7 +10,7 @@ public class Calculator
     {
         var a = 2;
         var b = 3;
-        var result = Math.Max(a + 1, b * 2);
+        var result = Math.Max(a, b);
     }
 }
 ```
@@ -18,7 +18,7 @@ public class Calculator
 ## Selected Span
 
 ```csharp
-Math.Max(a + 1, b * 2)
+Math.Max(a, b)
 ```
 
 ---
@@ -34,12 +34,12 @@ public class Calculator
     {
         var a = 2;
         var b = 3;
-        var result = GetMaxOfCalculations(a, b);
+        var result = GetMaxValue(a, b);
     }
 
-    private int GetMaxOfCalculations(int a, int b)
+    private int GetMaxValue(int a, int b)
     {
-        return Math.Max(a + 1, b * 2);
+        return Math.Max(a, b);
     }
 }
 ```

@@ -8,7 +8,7 @@ namespace RoslynRefactoring.Tests;
 public class BreakHardDependencyTests
 {
     [Test]
-    public async Task HandleZeroHardDependencies()
+    public async Task BreakHardDependencyWithZeroHardDependencies()
     {
         const string code = """
                             public class OrderProcessor
@@ -24,7 +24,7 @@ public class BreakHardDependencyTests
     }
 
     [Test]
-    public async Task HandleOneHardDependencyNoConstructor()
+    public async Task BreakHardDependencyWithOneHardDependencyNoConstructor()
     {
         const string code = """
                             public class OrderProcessor
@@ -43,7 +43,7 @@ public class BreakHardDependencyTests
     }
 
     [Test]
-    public async Task HandleOneHardDependencyWithExistingConstructor()
+    public async Task BreakHardDependencyWithOneHardDependencyWithExistingConstructor()
     {
         const string code = """
                             public class OrderProcessor
