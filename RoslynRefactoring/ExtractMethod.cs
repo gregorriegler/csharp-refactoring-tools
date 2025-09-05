@@ -36,7 +36,6 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
 
         var root = await document.GetSyntaxRootAsync();
         if (root == null) throw new InvalidOperationException("SyntaxRoot is null.");
-        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
 
         var selectedNode = root.FindNode(span);
         var block = selectedNode.AncestorsAndSelf().OfType<BlockSyntax>().FirstOrDefault();
@@ -52,6 +51,14 @@ public class ExtractMethod(CodeSelection selection, string newMethodName) : IRef
         var model = await document.GetSemanticModelAsync();
         if (model == null) throw new InvalidOperationException("SemanticModel is null.");
 
+        // Validate that the semantic model can actually perform basic operations
+        // by checking if it has the necessary compilation references
+        if (!model.Compilation.References.Any())
+        {
+            throw new InvalidOperationException("SemanticModel is null.");
+        }
+
+        var editor = new SyntaxEditor(root, document.Project.Solution.Workspace.Services);
         var extractionTarget = ExtractionTarget.CreateFromSelection(selectedNode, span, block, model);
         var replacementNode = extractionTarget.CreateReplacementNode(newMethodName);
         extractionTarget.ReplaceInEditor(editor, replacementNode);
