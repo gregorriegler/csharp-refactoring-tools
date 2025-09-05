@@ -68,12 +68,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     private TypeSyntax WrapInTaskType(TypeSyntax baseType)
     {
-        if (baseType.IsKind(SyntaxKind.PredefinedType) &&
-            ((PredefinedTypeSyntax)baseType).Keyword.IsKind(SyntaxKind.VoidKeyword))
-        {
-            return SyntaxFactory.ParseTypeName("Task");
-        }
-
         if (IsTaskType(baseType))
         {
             return baseType;
@@ -97,9 +91,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
         if (variable?.Initializer?.Value == null)
-            return !lastLocalDecl.Declaration.Type.IsVar
-                ? lastLocalDecl.Declaration.Type
-                : SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
+            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword));
         var inferredType = typeInferrer.InferType(variable.Initializer.Value, semanticModel);
         return SyntaxFactory.ParseTypeName(inferredType ?? "object");
 
@@ -131,7 +123,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ParseTypeName(typeFromDeclaration);
         }
 
-        throw new InvalidOperationException("Unsupported return symbol type.");
+        return SyntaxFactory.ParseTypeName("object");
     }
 
     private string InferTypeFromVariableDeclaration(string variableName)
@@ -148,7 +140,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             }
         }
 
-        return "object";
+        return "var";
     }
 
     protected override BlockSyntax CreateMethodBody()
@@ -178,17 +170,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             var hasReturnStatement = selectedStatements
                 .SelectMany(stmt => stmt.DescendantNodesAndSelf().OfType<ReturnStatementSyntax>())
                 .Any();
-
-            if (!hasReturnStatement)
-            {
-                var returnType = DetermineReturnType();
-                if (returnType.IsKind(SyntaxKind.PredefinedType) &&
-                    ((PredefinedTypeSyntax)returnType).Keyword.IsKind(SyntaxKind.BoolKeyword))
-                {
-                    return newMethodBody.AddStatements(
-                        SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)));
-                }
-            }
         }
 
         var lastStatement = selectedStatements.Last();
@@ -236,42 +217,33 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         {
             ILocalSymbol local => local.Type,
             IParameterSymbol parameter => parameter.Type,
-            _ => throw new InvalidOperationException($"Unsupported symbol type: {symbol.GetType()}")
+            _ => ((ILocalSymbol)symbol).Type
         };
     }
 
     public override SyntaxNode CreateReplacementNode(string methodName)
     {
+        var methodCall = CreateMethodCall(methodName, GetParameters());
+        var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
+
         if (returnBehavior.RequiresReturnStatement)
         {
-            var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return SyntaxFactory.ReturnStatement(awaitedCall);
         }
 
         var returns = extractedCodeDataFlow.GetReturns();
         if (returns.Count == 0)
         {
-            var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return GetCallStatement(awaitedCall);
         }
 
         if (returns.Count > 1)
         {
-            var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
             return CreateTupleDestructuringStatement(awaitedCall, returns);
         }
 
-        if (returns.FirstOrDefault() is { } localReturnSymbol)
-        {
-            var methodCall = CreateMethodCall(methodName, GetParameters());
-            var awaitedCall = ContainsAwaitExpressions ? (ExpressionSyntax)SyntaxFactory.AwaitExpression(methodCall) : methodCall;
-            return CreateLocalReturnStatement(awaitedCall, localReturnSymbol);
-        }
-
-        throw new InvalidOperationException("Unsupported return symbol type.");
+        var localReturnSymbol = returns.FirstOrDefault()!;
+        return CreateLocalReturnStatement(awaitedCall, localReturnSymbol);
     }
 
     public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
@@ -304,11 +276,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private StatementSyntax CreateLocalReturnStatement(ExpressionSyntax methodCall,
         ILocalSymbol localReturnSymbol)
     {
-        if (selectedStatements.Count == 1 && selectedStatements.First() is ReturnStatementSyntax)
-        {
-            return SyntaxFactory.ReturnStatement(methodCall);
-        }
-
         var typeToUse = DetermineVariableType(localReturnSymbol);
 
         return SyntaxFactory.LocalDeclarationStatement(
@@ -343,12 +310,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     public override SyntaxNode GetInsertionPoint()
     {
         var methodNode = containingBlock.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-        if (methodNode != null)
-        {
-            return methodNode;
-        }
-
-        return selectedStatements.Last();
+        return methodNode!;
     }
 
     protected override bool IsAsyncMethod()
