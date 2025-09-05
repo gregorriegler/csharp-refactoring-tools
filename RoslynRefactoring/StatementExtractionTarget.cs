@@ -13,6 +13,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     private readonly ExtractedCodeDataFlow extractedCodeDataFlow;
     private readonly TypeInferrer typeInferrer;
     private readonly bool containsAwaitExpressions;
+    private readonly ReturnValueStrategy returnValueStrategy;
 
     public StatementExtractionTarget(
         List<StatementSyntax> selectedStatements,
@@ -32,6 +33,9 @@ public sealed class StatementExtractionTarget : ExtractionTarget
         typeInferrer = new TypeInferrer();
         containsAwaitExpressions = selectedStatements.Any(stmt =>
             stmt.DescendantNodesAndSelf().OfType<AwaitExpressionSyntax>().Any());
+
+        var returns = extractedCodeDataFlow.GetReturns();
+        returnValueStrategy = ReturnValueStrategy.Create(returns, typeInferrer, semanticModel, selectedStatements);
     }
 
     private TypeSyntax GetBaseReturnType()
@@ -99,31 +103,8 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     private TypeSyntax DetermineLocalReturnType(IReadOnlyList<ILocalSymbol> returns)
     {
-        if (returns.Count > 1)
-        {
-            var tupleElements = returns.Select(symbol =>
-            {
-                var typeName = symbol.Type.TypeKind != TypeKind.Error
-                    ? symbol.Type.ToDisplayString()
-                    : InferTypeFromVariableDeclaration(symbol.Name);
-                return SyntaxFactory.TupleElement(SyntaxFactory.ParseTypeName(typeName));
-            });
-
-            return SyntaxFactory.TupleType(SyntaxFactory.SeparatedList(tupleElements));
-        }
-
-        if (returns.FirstOrDefault() is { } localReturnSymbol)
-        {
-            if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
-            {
-                return SyntaxFactory.ParseTypeName(localReturnSymbol.Type.ToDisplayString());
-            }
-
-            var typeFromDeclaration = InferTypeFromVariableDeclaration(localReturnSymbol.Name);
-            return SyntaxFactory.ParseTypeName(typeFromDeclaration);
-        }
-
-        return SyntaxFactory.ParseTypeName("object");
+        var strategy = ReturnValueStrategy.Create(returns, typeInferrer, semanticModel, selectedStatements);
+        return strategy.CreateReturnType();
     }
 
     private string InferTypeFromVariableDeclaration(string variableName)
@@ -145,24 +126,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
 
     protected override BlockSyntax CreateMethodBody()
     {
-        var returns = extractedCodeDataFlow.GetReturns();
-        if (returns.Count > 1)
-        {
-            var tupleElements = returns.Select(symbol =>
-                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(symbol.Name)));
-            var tupleExpression = SyntaxFactory.TupleExpression(SyntaxFactory.SeparatedList(tupleElements));
-            return SyntaxFactory.Block(selectedStatements)
-                .AddStatements(SyntaxFactory.ReturnStatement(tupleExpression));
-        }
-
-        if (returns.Count == 1)
-        {
-            return returns.FirstOrDefault() is { } returnSymbol
-                ? SyntaxFactory.Block(selectedStatements)
-                    .AddStatements(SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(returnSymbol.Name)))
-                : SyntaxFactory.Block(selectedStatements);
-        }
-
         var newMethodBody = SyntaxFactory.Block(selectedStatements);
 
         if (returnBehavior.RequiresReturnStatement)
@@ -172,18 +135,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
                 .Any();
         }
 
-        var lastStatement = selectedStatements.Last();
-        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
-        {
-            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
-            if (variable != null)
-            {
-                return newMethodBody.AddStatements(
-                    SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(variable.Identifier.Text)));
-            }
-        }
-
-        return newMethodBody;
+        return returnValueStrategy.AddReturnStatementToBody(newMethodBody);
     }
 
     protected override List<ParameterSyntax> GetParameters()
@@ -231,19 +183,7 @@ public sealed class StatementExtractionTarget : ExtractionTarget
             return SyntaxFactory.ReturnStatement(awaitedCall);
         }
 
-        var returns = extractedCodeDataFlow.GetReturns();
-        if (returns.Count == 0)
-        {
-            return GetCallStatement(awaitedCall);
-        }
-
-        if (returns.Count > 1)
-        {
-            return CreateTupleDestructuringStatement(awaitedCall, returns);
-        }
-
-        var localReturnSymbol = returns.FirstOrDefault()!;
-        return CreateLocalReturnStatement(awaitedCall, localReturnSymbol);
+        return returnValueStrategy.CreateReplacementStatement(awaitedCall);
     }
 
     public override void ReplaceInEditor(SyntaxEditor editor, SyntaxNode replacementNode)
@@ -254,58 +194,6 @@ public sealed class StatementExtractionTarget : ExtractionTarget
     }
 
 
-    private StatementSyntax GetCallStatement(ExpressionSyntax methodCall)
-    {
-        var lastStatement = selectedStatements.Last();
-        if (lastStatement is LocalDeclarationStatementSyntax lastLocalDecl)
-        {
-            var variable = lastLocalDecl.Declaration.Variables.FirstOrDefault();
-            if (variable != null)
-            {
-                return SyntaxFactory.LocalDeclarationStatement(
-                    SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName("var"))
-                        .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variable.Identifier.Text))
-                                .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
-            }
-        }
-
-        return SyntaxFactory.ExpressionStatement(methodCall);
-    }
-
-    private StatementSyntax CreateLocalReturnStatement(ExpressionSyntax methodCall,
-        ILocalSymbol localReturnSymbol)
-    {
-        var typeToUse = DetermineVariableType(localReturnSymbol);
-
-        return SyntaxFactory.LocalDeclarationStatement(
-            SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(typeToUse))
-                .WithVariables(SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(localReturnSymbol.Name))
-                        .WithInitializer(SyntaxFactory.EqualsValueClause(methodCall)))));
-    }
-
-    private string DetermineVariableType(ILocalSymbol localReturnSymbol)
-    {
-        if (localReturnSymbol.Type.TypeKind != TypeKind.Error)
-        {
-            return localReturnSymbol.Type.ToDisplayString();
-        }
-
-        return "var";
-    }
-
-    private StatementSyntax CreateTupleDestructuringStatement(ExpressionSyntax methodCall, IReadOnlyList<ILocalSymbol> returns)
-    {
-        var variableNames = string.Join(", ", returns.Select(r => r.Name));
-        var tuplePattern = $"({variableNames})";
-
-        return SyntaxFactory.ExpressionStatement(
-            SyntaxFactory.AssignmentExpression(
-                SyntaxKind.SimpleAssignmentExpression,
-                SyntaxFactory.ParseExpression(tuplePattern),
-                methodCall));
-    }
 
     public override SyntaxNode GetInsertionPoint()
     {
