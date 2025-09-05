@@ -53,4 +53,39 @@ public class ExtractMethodErrorCasesTests
 
         Assert.That(result, Is.EqualTo(document));
     }
+
+    [Test]
+    public async Task ThrowsWhenSemanticModelIsNull()
+    {
+        var code = """
+            class Test
+            {
+                void Method()
+                {
+                    var x = 1;
+                }
+            }
+            """;
+        var document = DocumentTestHelper.CreateDocument(code);
+
+        // Create a document without compilation to simulate null semantic model
+        var projectWithoutCompilation = document.Project;
+        foreach (var reference in document.Project.MetadataReferences)
+        {
+            projectWithoutCompilation = projectWithoutCompilation.RemoveMetadataReference(reference);
+        }
+        var documentWithoutSemanticModel = projectWithoutCompilation.GetDocument(document.Id);
+
+        var extractMethod = ExtractMethod.Create(["5:9-5:18", "TestMethod"]);
+
+        try
+        {
+            await extractMethod.PerformAsync(documentWithoutSemanticModel!);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Assert.That(ex.Message, Does.Contain("SemanticModel is null"));
+        }
+    }
 }
