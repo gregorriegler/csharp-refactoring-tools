@@ -88,4 +88,27 @@ public class ExtractMethodErrorCasesTests
             Assert.That(ex.Message, Does.Contain("SemanticModel is null"));
         }
     }
+
+    [Test]
+    public async Task ExtractMethodWithFieldReference()
+    {
+        var code = """
+            class Test
+            {
+                void Method()
+                {
+                    var field = this.someField;
+                    var x = field + 1;
+                }
+
+                private int someField = 42;
+            }
+            """;
+        var document = DocumentTestHelper.CreateDocument(code);
+        var extractMethod = ExtractMethod.Create(["6:9-6:26", "TestMethod"]);
+
+        var result = await extractMethod.PerformAsync(document);
+
+        Assert.That(result, Is.Not.EqualTo(document));
+    }
 }
