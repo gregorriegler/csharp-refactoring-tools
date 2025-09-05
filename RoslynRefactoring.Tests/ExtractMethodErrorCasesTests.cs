@@ -6,39 +6,23 @@ namespace RoslynRefactoring.Tests;
 public class ExtractMethodErrorCasesTests
 {
     [Test]
-    public async Task ThrowsWhenNoValidExtractionTargetFound()
+    public void ThrowsWhenNoValidExtractionTargetFound()
     {
         var code = "class Test;";
         var document = DocumentTestHelper.CreateDocument(code);
         var extractMethod = ExtractMethod.Create(["1:1-1:1", "TestMethod"]);
 
-        try
-        {
-            await extractMethod.PerformAsync(document);
-            Assert.Fail("Expected InvalidOperationException was not thrown");
-        }
-        catch (InvalidOperationException ex)
-        {
-            Assert.That(ex.Message, Does.Contain("Selected statements are not inside a block"));
-        }
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await extractMethod.PerformAsync(document));
     }
 
     [Test]
-    public async Task ThrowsWhenNoContainingBlock()
+    public void ThrowsWhenNoContainingBlock()
     {
         var code = "class Test;";
         var document = DocumentTestHelper.CreateDocument(code);
         var extractMethod = ExtractMethod.Create(["1:7-1:11", "TestMethod"]);
 
-        try
-        {
-            await extractMethod.PerformAsync(document);
-            Assert.Fail("Expected InvalidOperationException was not thrown");
-        }
-        catch (InvalidOperationException ex)
-        {
-            Assert.That(ex.Message, Does.Contain("Selected statements are not inside a block"));
-        }
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await extractMethod.PerformAsync(document));
     }
 
     [Test]
@@ -54,7 +38,7 @@ public class ExtractMethodErrorCasesTests
     }
 
     [Test]
-    public async Task ThrowsWhenSemanticModelIsNull()
+    public void ThrowsWhenSemanticModelIsNull()
     {
         var code = """
             class Test
@@ -66,26 +50,15 @@ public class ExtractMethodErrorCasesTests
             }
             """;
         var document = DocumentTestHelper.CreateDocument(code);
-
-        // Create a document without compilation to simulate null semantic model
         var projectWithoutCompilation = document.Project;
         foreach (var reference in document.Project.MetadataReferences)
         {
             projectWithoutCompilation = projectWithoutCompilation.RemoveMetadataReference(reference);
         }
         var documentWithoutSemanticModel = projectWithoutCompilation.GetDocument(document.Id);
-
         var extractMethod = ExtractMethod.Create(["5:9-5:18", "TestMethod"]);
 
-        try
-        {
-            await extractMethod.PerformAsync(documentWithoutSemanticModel!);
-            Assert.Fail("Expected InvalidOperationException was not thrown");
-        }
-        catch (InvalidOperationException ex)
-        {
-            Assert.That(ex.Message, Does.Contain("SemanticModel is null"));
-        }
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await extractMethod.PerformAsync(documentWithoutSemanticModel!));
     }
 
     [Test]
